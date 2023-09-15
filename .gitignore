@@ -1,0 +1,12 @@
+/GG20*.txt
+/hands-*/
+/GGPokerHandHistoryParser.lnk
+
+# Created by Python tools
+/history.txt
+/PreflopChartExtractions/
+
+# Exe creation artefacts
+/build/
+/dist/
+/GGPokerHandHistoryParser.spec
