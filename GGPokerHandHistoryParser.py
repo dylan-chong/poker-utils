@@ -1,15 +1,26 @@
+"""
+# Setup 
+You will have to run PreflopChartsExtractor.py to produce the charts JSON. See that file for docs
+
+# Deps
+pip3 install parse
+
+# Run
+python3 GGPokerHandHistoryParser.py
+
+# To export, for another person to use
+pip3 install pyinstaller
+pyinstaller.exe GGPokerHandHistoryParser.py -y --add-data 'PreflopChartExtractions/PreflopCharts.json;data'
+# Then compress/send the folder inside /dist/
+"""
+
 import glob
-import sys
 import traceback
 import json
 import re
 from pathlib import Path
 
-# pip3 install parse
 from parse import *
-
-# pip3 install pyinstaller
-# pyinstaller.exe GGPokerHandHistoryParser.py -y --add-data 'PreflopChartExtractions/PreflopCharts.json;data'
 
 SEAT_NUM_TO_SEAT = {
     1: 'BTN',

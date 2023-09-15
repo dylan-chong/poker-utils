@@ -1,3 +1,15 @@
+"""
+# Deps
+pip3 install opencv-python
+pip3 install pypdf[image]
+pip3 install pytesseract
+# and install tesseract here https://github.com/tesseract-ocr/tesseract#installing-tesseract
+pip3 install parse
+
+# Run
+python3 PreflopChartsExtractor.py
+"""
+
 import os
 import shutil
 import math
@@ -5,19 +17,14 @@ import json
 from pathlib import Path
 from collections import OrderedDict
 
-# pip3 install opencv-python
 import cv2
 
-# pip3 install pypdf[image]
 from pypdf import PdfReader
 
-# pip3 install pytesseract
-# install tesseract here https://github.com/tesseract-ocr/tesseract#installing-tesseract
 from PIL import Image
 import pytesseract
 pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
 
-# pip3 install parse
 from parse import parse
 
 OUTPUT_DIR = 'PreflopChartExtractions'
