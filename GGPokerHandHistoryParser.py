@@ -84,7 +84,6 @@ def main_loop():
     if search_term.find('range ') == 0:
         print_range(search_term)
         return search_term, []
-        # TODO hero <pattern> <pattern> search is deprecated
         # TODO range command we may not keep
     if search_term == 'e':
         extract_downloads()
@@ -117,13 +116,6 @@ def main_loop():
             print_hand(hand)
             hands.append(hand)
     
-    if is_hero_hand_search(search_term):
-        for lazy_hand in lazy_hands:
-            if matches_hero_hole_card_search(lazy_hand, search_term):
-                hand = lazy_hand['parse']()
-                print_hand_short(hand)
-                hands.append(hand)
-
     if search_term == 'r':
         lazy_hands = lazy_hands[-50:]
         for lazy_hand in lazy_hands:
@@ -189,31 +181,6 @@ def print_range(search_term):
     print(f'  Call')
     print(f'    {call_range}')
 
-def is_hero_hand_search(search_term):
-    return search_term.lower().find('hero ') == 0
-
-def validate_hole_card_search(search_term, with_hero_prefix=True):
-    search_term = search_term.lower()
-    valid_cards = 'x23456789tjqka'
-    valid_suits = 'xcdhs'
-    hero_prefix = 'hero\s+' if with_hero_prefix else ''
-
-    pattern = rf'^{hero_prefix}([{valid_cards}][{valid_suits}])\s+([{valid_cards}][{valid_suits}])$'
-    return re.compile(pattern).match(search_term)
-
-def matches_hero_hole_card_search(lazy_hand, search_term):
-    match = validate_hole_card_search(search_term)
-    pattern_a = card_pattern_to_regex(match.group(1))
-    pattern_b = card_pattern_to_regex(match.group(2))
-    [card_a, card_b] = lazy_hand['players']['Hero']['hole_cards']
-
-    if pattern_a.match(card_a) and pattern_b.match(card_b): return True
-    if pattern_b.match(card_a) and pattern_a.match(card_b): return True
-    return False
-
-def card_pattern_to_regex(pattern):
-    return re.compile(pattern.capitalize().replace('x', '.'))
-
 def reformat_search_term(search_term):
     if search_term in ['h', 'e', 'a', 'r']: return search_term
 
@@ -232,14 +199,6 @@ def reformat_search_term(search_term):
 
     if search_term.startswith('range'):
         return search_term
-    
-    if search_term.startswith('hero'):
-        if not validate_hole_card_search(search_term):
-            raise InvalidSearchException(f'Invalid hero hole card search: {search_term}')
-        return search_term
-
-    if validate_hole_card_search(search_term, with_hero_prefix=False):
-        raise InvalidSearchException(f'Prefix the card search with `hero`. E.g., {search_term}')
 
     raise InvalidSearchException(f'Unknown command `{search_term}`')
 
