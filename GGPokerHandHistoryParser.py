@@ -20,6 +20,7 @@ import traceback
 import json
 import re
 import zipfile
+import textwrap
 from datetime import datetime
 from pathlib import Path
 
@@ -68,12 +69,12 @@ def main():
 
 def main_loop():
     print('Enter command, e.g.: ')
-    print('- `e` - extract data from PokerCraft zip')
-    print('- `r` - show recent hands')
-    print('- `#RC1800277957` - show hand with the given hand ID (requires extraction) ')
-    print('- `l` - repeat the last search')
-    print('- `h` - show search history')
-    print('- `a` - show all hands')
+    print('- e - extract data from PokerCraft zip')
+    print('- r - show recent analysable hands (where the hero reaches the flop, without limp or check)')
+    print('- #RC1800277957 - show hand with the given hand ID (requires extraction) ')
+    print('- l - repeat the last search')
+    print('- h - show search history')
+    print('- a - show all hands')
     search_term = input('>>> ').strip()
     print()
     search_term = reformat_search_term(search_term)
@@ -113,11 +114,13 @@ def main_loop():
             hands.append(hand)
     
     if search_term == 'r':
-        lazy_hands = lazy_hands[-50:]
-        for lazy_hand in lazy_hands:
+        for lazy_hand in reversed(lazy_hands):
+            if len(hands) == 20: break
             hand = lazy_hand['parse']()
-            print_hand_short(hand)
+            if 'error' in hand: continue
             hands.append(hand)
+        hands = list(reversed(hands))
+        for hand in hands: print_hand_short(hand)
 
     print()
     for line in format_result_count(search_term, hands):
@@ -299,7 +302,7 @@ def print_hand(hand):
     print()
 
 def print_hand_short(hand):
-    if 'error' in hand: error_suffix = f'Not analysable ({hand["error"]})'
+    if 'error' in hand: error_suffix = f'not analysable ({hand["error"]})'
     else: error_suffix = 'Analysable'
 
     cards = format_cards(hand["players"]["Hero"]["hole_cards"])
@@ -315,11 +318,22 @@ def print_position(position_key, hand):
     hole_cards_suffix = f' {hole_cards}' if hole_cards else ''
 
     print(f'  {position_key.upper()}{hero_suffix}{hole_cards_suffix}')
+
     if position["chart"]:
         print(f'    {position["action_description"]} ({position["chart"]["label"]})')
     else:
         print(f'    {position["action_description"]}')
-    print(f'      {position["range"]}')
+
+    for line in format_range_wrapped(position['range'], indent='      ', width=99):
+        print(line)
+
+def format_range_wrapped(range, indent, width):
+    lines = [indent]
+    for word in range.split(','):
+        if len(lines[-1]) + len(word) >= width:
+            lines.append(indent)
+        lines[-1] = lines[-1] + word + ','
+    return lines
 
 def format_cards(cards, with_border=True):
     joined = ' '.join(cards)
