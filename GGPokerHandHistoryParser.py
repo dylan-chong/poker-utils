@@ -14,10 +14,12 @@ pyinstaller.exe GGPokerHandHistoryParser.py -y --add-data 'PreflopChartExtractio
 # Then compress/send the folder inside /dist/
 """
 
+import os
 import glob
 import traceback
 import json
 import re
+import zipfile
 from pathlib import Path
 
 from parse import *
@@ -31,8 +33,11 @@ SEAT_NUM_TO_SEAT = {
     6: 'CO',
 }
 POSTFLOP_SEAT_ORDER = ['SB', 'BB', 'LJ', 'HJ', 'CO', 'BTN']
-CONTENTS_DIR = Path(Path.home(), Path('Downloads'), Path('GG'))
+DOWNLOADS_DIR = Path(Path.home(), Path('Downloads'))
+CONTENTS_DIR = Path(DOWNLOADS_DIR, Path('GG'))
 LOG_FILE_PATH = Path(CONTENTS_DIR, Path('history.txt'))
+
+UUID_REGEX = r'^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$'
 
 CHART_FILE = Path('PreflopChartExtractions/PreflopCharts.json')
 with open(CHART_FILE) as f:
@@ -45,8 +50,8 @@ class InvalidHoleCardSearchException(Exception):
     pass
 
 def main():
-    print(f'Please extract all your GG hand history .txt files directly into your `{CONTENTS_DIR}` directory (create it if it doesn\'t exist).')
-    print(f'(You don\'t have to restart this app when you add new files)')
+    print(f'Download your GGPoker hand histories into your `{DOWNLOADS_DIR}` directory')
+    print(f'You can then run the `extract` command to decompress them')
 
     while True:
         try:
@@ -62,7 +67,14 @@ def main():
 
 def main_loop():
     # TODO hero <pattern> <pattern> search is deprecated
-    search_term = input('Enter hand ID (e.g., `#RC1800277957`), `all`, `last`, `history`, `hero T8 H8`, `hero Ah xx`, `range LJ vs BB 3bet`: ').strip()
+    # TODO range command we may not keep
+
+    print('Enter command, e.g.: ')
+    print('- `#RC1800277957` (hand ID) (requires `extract`ion)')
+    print('- `extract` to extract the data from PokerCraft zip')
+    print('- `last`, or `history` to view recent searches')
+    print('- `all`')
+    search_term = input('>>> ').strip()
     search_term = reformat_search_term(search_term)
 
     if search_term == 'history':
@@ -70,6 +82,9 @@ def main_loop():
         return search_term, []
     if search_term.find('range ') == 0:
         print_range(search_term)
+        return search_term, []
+    if search_term == 'extract':
+        extract_downloads()
         return search_term, []
 
     file_glob = str(Path(CONTENTS_DIR, Path("GG20*.txt")))
@@ -103,8 +118,32 @@ def main_loop():
         print(line)
     return search_term, matches
 
+def extract_downloads():
+    file_paths = os.listdir(DOWNLOADS_DIR)
+
+    pattern = UUID_REGEX.replace('$', '.zip$')
+    zip_paths = [
+        Path(Path(DOWNLOADS_DIR), Path(path))
+        for path in file_paths
+        if re.match(pattern, path)
+    ]
+    zip_paths.sort(key=lambda path: os.path.getmtime(path))
+
+    extracted_files = []
+    for path in zip_paths:
+        with zipfile.ZipFile(path, 'r') as zip:
+            files = [
+                file for file in zip.namelist()
+                if re.match(r'^GG20.*\.txt$', file)
+            ]
+            extracted_files.extend(files)
+            zip.extractall(CONTENTS_DIR, files)
+    
+    print(f'{len(extracted_files)} files extracted from {len(zip_paths)} zips')
+
 def print_range(search_term):
-    # TODO LATER allow convenient format for search
+    raise Exception("Range selection not implemented yet")
+    # TODO LATER allow convenient formatgg for search?
     term = parse('range {}', search_term)
     raise_range = get_range(term[0], 'raise')
     call_range = get_range(term[0], 'call')
@@ -155,7 +194,7 @@ def card_pattern_to_regex(pattern):
 def reformat_search_term(search_term):
     if search_term == 'last':
         last_term = last_search_term() or ''
-        print(f'Searching for: {last_term}')
+        print(f'Searching for: `{last_term}`')
         return last_term.strip()
 
     if search_term.startswith('RC'):
@@ -220,7 +259,7 @@ def save_to_history_file(search_term, matches):
             f.write('\n')
 
 def format_history_lines(search_term, matches):
-    if search_term in ['last', 'history', 'all']: return []
+    if search_term in ['last', 'history', 'all', 'extract']: return []
     if search_term.find('range ') == 0: return []
     if len(matches) == 0: return [f'{search_term} - {len(matches)} matches']
     return format_result_count(search_term, matches)
@@ -396,7 +435,7 @@ def vs_raisers_match(vs_raisers_from_chart, vs_raisers, match_any):
     
 def format_position_action_description(seat, vs_raisers, action_key):
     vs_suffix = ' vs '.join(vs_raisers)
-    vs_suffix = ''.join(' vs ' + raiser for raiser in vs_raisers)
+    vs_suffix = ''.join(f' vs {raiser} raise' for raiser in vs_raisers)
     return f'{action_key.capitalize()} as {seat}{vs_suffix}'
     
 def find_chart(seat, vs_raisers):
