@@ -324,7 +324,7 @@ def print_position(position_key, hand):
     else:
         print(f'    {position["action_description"]}')
 
-    for line in format_range_wrapped(position['range'], indent='      ', width=99):
+    for line in format_range_wrapped(position['range'], indent='      ', width=79):
         print(line)
 
 def format_range_wrapped(range, indent, width):
