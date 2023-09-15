@@ -81,10 +81,6 @@ def main_loop():
     if search_term == 'h':
         print_history()
         return search_term, []
-    if search_term.find('range ') == 0:
-        print_range(search_term)
-        return search_term, []
-        # TODO range command we may not keep
     if search_term == 'e':
         extract_downloads()
         return search_term, []
@@ -164,23 +160,6 @@ def extract_downloads():
     
     print(f'{len(extracted_files)} files extracted from {len(zip_paths)} zips')
 
-def print_range(search_term):
-    raise Exception("Range selection not implemented yet")
-    # TODO LATER allow convenient formatgg for search?
-    term = parse('range {}', search_term)
-    raise_range = get_range(term[0], 'raise')
-    call_range = get_range(term[0], 'call')
-
-    print(term[0])
-    if raise_range == 'MissingChart' and call_range == 'MissingChart':
-        print('  No range found')
-        return
-    
-    print(f'  Raise')
-    print(f'    {raise_range}')
-    print(f'  Call')
-    print(f'    {call_range}')
-
 def reformat_search_term(search_term):
     if search_term in ['h', 'e', 'a', 'r']: return search_term
 
@@ -196,9 +175,6 @@ def reformat_search_term(search_term):
         last_term = last_search_term() or ''
         print(f'Searching for: `{last_term}`')
         return last_term.strip()
-
-    if search_term.startswith('range'):
-        return search_term
 
     raise InvalidSearchException(f'Unknown command `{search_term}`')
 
@@ -253,7 +229,6 @@ def save_to_history_file(search_term, matches):
 
 def format_history_lines(search_term, matches):
     if search_term in ['l', 'h', 'a', 'e', 'r']: return []
-    if search_term.find('range ') == 0: return []
     if len(matches) == 0: return [f'{search_term} - {len(matches)} matches']
     return format_result_count(search_term, matches)
 
