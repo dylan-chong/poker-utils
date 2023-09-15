@@ -35,157 +35,8 @@ CONTENTS_DIR = Path(Path.home(), Path('Downloads'), Path('GG'))
 LOG_FILE_PATH = Path(CONTENTS_DIR, Path('history.txt'))
 
 CHART_FILE = Path('PreflopChartExtractions/PreflopCharts.json')
-print('reading file')
 with open(CHART_FILE) as f:
-    json.load(f.read)
-
-# Yoinked from here and modified https://github.com/brianfordcode/poker-preflop-charts/blob/ef0e24e41fac6b0ede50569faf504e4b36aaaa98/src/components/chart.vue#L62C1-L62C1
-# These appear to be based on Jonothan Little's charts https://poker-coaching.s3.amazonaws.com/tools/preflop-charts/full-preflop-charts.pdf
-RANGE_CHART = {
-    "LJ RFI": {
-        "raise": "AA AKs AQs AJs ATs A9s A8s A7s A6s A5s A4s A3s A2s AKo KK KQs KJs KTs K9s K8s AQo KQo QQ QJs QTs Q9s AJo KJo QJo JJ JTs J9s ATo TT T9s 99 88 77 66",
-    },
-    "HJ RFI": {
-        "raise": "AA AKs AQs AJs ATs A9s A8s A7s A6s A5s A4s A3s A2s AKo KK KQs KJs KTs K9s K8s K7s K6s AQo KQo QQ QJs QTs Q9s Q8s AJo KJo QJo JJ JTs J9s ATo KTo QTo TT T9s 99 98s 88 87s 77 76s 66 55"
-    },
-    "CO RFI": {
-        "raise": "AA AKs AQs AJs ATs A9s A8s A7s A6s A5s A4s A3s A2s AKo KK KQs KJs KTs K9s K8s K7s K6s K5s K4s K3s AQo KQo QQ QJs QTs Q9s Q8s Q7s Q6s AJo KJo QJo JJ JTs J9s J8s ATo KTo QTo JTo TT T9s T8s T7s A9o 99 98s 97s A8o 88 87s 77 76s 66 55 44 33",
-    },
-    "BTN RFI": {
-        "raise": "AA AKs AQs AJs ATs A9s A8s A7s A6s A5s A4s A3s A2s AKo KK KQs KJs KTs K9s K8s K7s K6s K5s K4s K3s K2s AQo KQo QQ QJs QTs Q9s Q8s Q7s Q6s Q5s Q4s Q3s AJo KJo QJo JJ JTs J9s J8s J7s J6s J5s J4s ATo KTo QTo JTo TT T9s T8s T7s T6s A9o K9o Q9o J9o T9o 99 98s 97s 96s A8o K8o T8o 98o 88 87s 86s 85s A7o 77 76s 75s A6o 66 65s 64s A5o 55 54s 53s A4o 44 33 22",
-    },
-    "SB RFI": {
-        "raise": "22+,A2+,K2+,Q2+,J2s+,J5o+,T2s+,T5o+,92s+,95o+,82s+,85o+,72s+,75o+,62s+,64o+,52s+,54o,42s+,43o,32s"
-    },
-    "LJ vs HJ 3bet": {
-        "raise": "AA AKs AKo KK QQ" + " A9s A8s A5s A4s A3s A2s KQo AJo",
-        "call": "AQs AJs ATs KQs KJs KTs AQo QJs QTs JJ JTs TT T9s 99 98s 88 77",
-    },
-    "LJ vs CO 3bet": {
-        "raise": "AA AKs AKo KK QQ JJ" + " A9s A8s A5s A4s A3s A2s KQo AJo",
-        "call": "AQs AJs ATs KQs KJs KTs AQo QJs QTs JTs TT T9s 99 98s 88 77 66",
-    },
-    "LJ vs BTN 3bet": {
-        "raise": "AA AKs AKo KK QQ JJ" + " A9s A8s A7s A5s A5s A4s A3s A2s KQo AJo 76s",
-        "call": "AQs AJs ATs KQs KJs KTs AQo QJs QTs JTs TT T9s 99 98s 88 87s 77 66 55",
-    },
-    "LJ vs SB 3bet": {
-        "raise": "AA AKs AKo KK QQ JJ" + " A9s A8s A7s A6s A5s A4s A3s A2s ATo KJo",
-        "call": "AQs AJs ATs KQs KJs KTs AQo KQo QJs QTs AJo JTs J9s TT T9s 99 98s 88 87s 77 76s 66 55",
-    },
-    "LJ vs BB 3bet": {
-        "raise": "AA AKs AKo KK QQ JJ" + " A9s A8s A7s A6s A5s A4s A3s A2s AJo KQo",
-        "call": "AQs AJs ATs KQs KJs KTs AQo QJs QTs JTs TT T9s 99 98s 88 87s 77 76s 66 55 44",
-    },
-    "HJ vs LJ RFI": {
-        "raise": "AA AKs AQs AJs ATs A5s AKo KK KQs KJs KTs AQo KQo QQ QJs JJ TT 99",
-        "call": "TODO" # TODO add call stuff
-    },
-    "HJ vs CO 3bet": {
-        "raise": "AA AKs AKo KK QQ JJ" + " A9s A8s A7s A6s A5s A4s A3s A2s KJo ATo 76s",
-        "call": "AQs AJs ATs KQs KJs KTs K9s AQo KQo QJs QTs Q9s AJo JTs J9s TT T9s 99 98s 88 87s 77 66 55",
-        "fold": "K8s QJo T8s 97s 65s 54s 44 33 22"
-    },
-    "HJ vs BTN 3bet": {
-        "raise": "AA AKs AKo KK QQ JJ" + " A9s A8s A7s A6s A5s A4s A3s A2s KJo ATo 76s 65s 54s",
-        "call": "AQs AJs ATs KQs KJs KTs K9s AQo KQo QJs QTs Q9s AJo JTs J9s TT T9s 99 98s 88 87s 77 66 55 44",
-    },
-    "HJ vs SB 3bet": {
-        "raise": "AA AKs AKo KK QQ JJ" + " A9s A8s A7s A6s A5s A4s A3s A2s KJo ATo",
-        "call": "AQs AJs ATs KQs KJs KTs K9s AQo KQo QJs QTs Q9s AJo JTs J9s TT T9s 99 98s 88 87s 77 76s 66 55 44",
-    },
-    "HJ vs BB 3bet": {
-        "raise": "AA AKs AKo KK QQ JJ" + " A9s A8s A7s A6s A5s A4s A3s A2s KQo AJo",
-        "call": "AQs AJs ATs KQs KJs KTs AQo QJs QTs JTs TT T9s 99 98s 88 87s 77 76s 66 55 44",
-    },
-    "CO vs LJ RFI": {
-        "raise": "AA AKs AQs AJs ATs A5s AKo KK KQs KJs KTs AQo KQo QQ QJs JJ TT 99 88",
-        "call": "TODO" # TODO add call stuff
-    },
-    "CO vs HJ RFI": {
-        "raise": "AA AKs AQs AJs ATs A9s A5s A4s AKo KK KQs KJs KTs AQo KQo QQ QJs AJo JJ TT 99 88",
-        "call": "TODO" # TODO add call stuff
-    },
-    "CO vs BTN 3bet": {
-        "raise": "AA AKs AKo KK QQ JJ TT" + " A8s A7s A6s A4s A3s A2s KJo ATo 97s 86s 75s 54s",
-        "call": "AQs AJs ATs A9s A5s KQs KJs KTs K9s AQo KQo QJs QTs Q9s AJo JTs J9s T9s T8s 99 98s 88 87s 77 76s 66 65s 55 44",
-    },
-    "CO vs SB 3bet": {
-        "raise": "AA AKs AKo KK QQ JJ TT" + " A8s A7s A6s A4s A3s A2s KJo ATo 97s 86s 75s 54s",
-        "call": "AQs AJs ATs A9s A5s KQs KJs KTs K9s AQo KQo QJs QTs Q9s AJo JTs J9s T9s T8s 99 98s 88 87s 77 76s 66 65s 55 44",
-    },
-    "CO vs BB 3bet": {
-        "raise": "AA AKs AKo KK QQ JJ TT" + " A8s A4s A3s A2s KJo ATo T8s 97s 65s 54s",
-        "call": "AQs AJs ATs A9s A5s KQs KJs KTs K9s AQo KQo QJs QTs Q9s AJo JTs J9s T9s 99 98s 88 87s 77 76s 66 55 44",
-    },
-    "BTN vs LJ RFI": {
-        "raise": "AA AKs AQs A9s A8s A4s A3s AKo KK K9s KQo QQ QJs AJo JJ T9s",
-        "call": "AJs ATs A5s KQs KJs KTs AQo QTs JTs TT 99 88 77 76s 66 65s 55 54s"
-    },
-    "BTN vs HJ RFI": {
-        "raise": "AA AKs AQs A9s A8s A7s A4s A3s AKo KK KTs K9s K8s KQo QQ QTs Q9s AJo JJ T9s 66",
-        "call": "AJs ATs A5s KQs KJs AQo QJs JTs TT 99 98s 88 87s 77 55 44"
-    },
-    "BTN vs CO RFI": {
-        "raise": "AA AKs AQs A8s A7s A6s A4s A3s AKo KK KQs K9s KQo QQ QJs Q9s AJo KJo QJo JJ JTs J9s ATo TT 55",
-        "call": "AJs ATs A9s A5s KJs KTs AQo QTs T9s 99 98s 88 77 66"
-    },
-    "BTN vs SB 3bet": {
-        "raise": "AA AKs AQs AJs AKo KK AQo QQ JJ TT 99" + " K6s K5s K4s Q7s J7s QTo JTo K9o A8o 86s 75s 64s A5o 54s A4o 43s A3o",
-        "call": "ATs A9s A8s A7s A6s A5s A4s A3s A2s KQs KJs KTs K9s K8s K7s KQo QJs QTs Q9s Q8s AJo KJo QJo JTs J9s J8s ATo KTo T9s T8s T7s A9o 98s 97s 88 87s 77 76s 66 65s 55 44 33 22",
-    },
-    "BTN vs BB 3bet": {
-        "raise": "AA AKs AQs AJs AKo KK AQo QQ JJ TT 99" + " K6s K5s K4s Q7s J7s QTo JTo K9o A8o 86s 75s 64s A5o 54s A4o 43s A3o",
-        "call": "ATs A9s A8s A7s A6s A5s A4s A3s A2s KQs KJs KTs K9s K8s K7s KQo QJs QTs Q9s Q8s AJo KJo QJo JTs J9s J8s ATo KTo T9s T8s T7s A9o 98s 97s 88 87s 77 76s 66 65s 55 44 33 22",
-    },
-    "SB vs LJ RFI": {
-        "raise": "AA AKs AQs AJs ATs A5s AKo KK KQs KJs KTs AQo QQ QJs JJ TT 99",
-        "call": "AJs ATs KQs KJs KTs AQo QJs QTs JJ JTs TT T9s 99 98s 88 66 55"
-    },
-    "SB vs HJ RFI": {
-        "raise": "AA AKs AQs AJs ATs A5s AKo KK KQs KJs KTs AQo QQ QJs QTs JJ JTs TT 99 88 77",
-        "call": "TODO" # TODO add call stuff
-    },
-    "SB vs CO RFI": {
-        "raise": "AA AKs AQs AJs ATs A9s A5s AKo KK KQs KJs KTs AQo KQo QQ QJs QTs AQo KQo QQ QJs QTs JJ JTs J9s TT T9s 99 88 77 66",
-        "call": ""
-    },
-    "SB vs BTN RFI": {
-        "raise": "AA AKs AQs AJs ATs A9s A8s A7s A5s A4s AKo KK KQs KJs KTs K9s AQo KQo QQ QJs QTs Q9s AJo KJo JJ JTs J9s TT T9s T8s 99 88 77 66 55",
-        "call": ""
-    },
-    "SB RFI vs BB 3bet": {
-        "raise": "AA AKs AQs AJs AKo KK AQo QQ JJ" + " J4s Q5o Q4o K3o K2o ",
-        "call": "ATs KQs KJs KQo QJs AJo KJo ATo TT 99 95s 88 85s 74s 43s",
-    },
-    "SB vs BB RFI": {
-        # TODO SB stuff
-    },
-    "BB vs LJ RFI": {
-        "raise": "AA AKs AQs A5s A4s AKo KK KQs KJs QQ QJs JJ JTs 65s 54s",
-        "call": "AJs ATs A9s A8s A7s A6s A3s A2s KTs K9s K8s K7s K6s K5s K4s K3s K2s AQo KQo QTs Q9s Q8s Q7s Q6s Q5s AJo KJo QJo J9s J8s ATo JTo TT T9s T8s T7s 99 98s 97s 96s 88 87s 86s 85s 77 76s 75s 74s 66 64s 63s 55 53s 44 43s 33 32s 22" 
-    },
-    "BB vs HJ RFI": {
-        "raise": "AA AKs AQs A9s A5s A4s AKo KK KQs KJs KTs K5s QQ QJs QTs JJ JTs TT 65s 54s",
-        "call": "AJs ATs A8s A7s A6s A3s A2s K9s K8s K7s K6s K4s K3s K2s AQo KQo Q9s Q8s Q7s Q6s Q5s AJo KJo QJo J9s J8s J7s ATo KTo QTo JTo T9s T8s T7s A9o 99 98s 97s 96s 88 87s 86s 85s 77 76s 75s 74s 66 64s 63s 55 53s 44 43s 33 22" 
-    },
-    "BB vs CO RFI": {
-        "raise": "AA AKs AQs AJs A9s A5s A4s AKo KK KQs KJs KTs AQo QQ QJs QTs Q9s JJ JTs J9s TT T9s 99 65s 54s",
-        "call": "ATs A8s A7s A6s A3s A2s K9s K8s K7s K6s K5s K4s K3s K2s KQo Q8s Q7s Q6s Q5s Q4s Q3s AJo KJo QJo J8s J7s J6s ATo KTo QTo JTo T8s T7s A9o T9o 98s 97s 96s A8o 88 87s 86s 85s 77 76s 75s 74s 66 64s 63s A5o 55 53s 52s 44 43s 33 22" 
-    },
-    "BB vs BTN RFI": {
-        "raise": "AA AKs AQs AJs ATs A6s A5s A4s AKo KKs KQs KJs KTs K9s AQo KQo QQ QJs QTs Q9s JJ JTs J9s J8s TT T9s T8s 99 98s 97s 88 87s 76s 65s 54s",
-        "call": "A9s A8s A7s A3s A2s K8s K7s K6s K5s K4s K3s K2s Q8s Q7s Q6s Q5s Q4s Q3s Q2s AJo KJo QJo J7s J6s J5s J4s J3s J2s ATo KTo QTo JTo T7s T6s T5s T4s T3s T2s A9o K9o Q9o J9o T9o 96s 95s 94s A8o K8o Q8o J8o T8o 98o 86s 85s 84s A7o K7o 87o 77 75s 74s 73s A6o K6o 76o 66 64s 63s 62s A5o 65o 55 53s 52s A4o 54o 44 43s 42s 33 32s 22"  
-    },
-    "BB vs SB RFI": {
-        # TODO raise
-        "call": "88-22,A8s-A2s,ATo-A2o,K8s-K2s,KJo-K4o,Q8s-Q2s,Q5o+,J7s-J2s,J7o+,T6s-T2s,T7o+,95s-92s,97o+,83s-82s,87o,73s-72s,76o,62s,65o,52s,42s,32s"
-    },
-    "BB vs SB Raise": {
-        "raise": "AA AKs AQs AJs ATs A5s A4s AKo KK KQs KJs KTs AQo QQ QJs JJ J5s TT T5s 99 95s J8o 88 87s J7o T7o 76s A6o K6o Q6o 65s K5o 54s",
-        "call": "A9s A8s A7s A6s A3s A2s K9s K8s K7s K6s K5s K4s K3s K2s KQo QTs Q9s Q8s Q7s Q6s Q5s Q4s Q3s Q2s AJo KJo QJo JTs J9s J8s J7s J6s J4s J3s J2s ATo KTo QTo JTo T9s T8s T7s T6s T4s T3s T2s A9o K9o Q9o J9o T9o 98s 97s 96s 96s 94s 93s 92s A8o K8o Q8o T8o 98o 86s 85s 84s A7o K7o Q7o 97o 87o 77 75s 74s 73s 86o 76o 66 64s 63s 62s A5o 65o 55 53s 52s A4o 54o 44 43s 42s A3o 33 32s A2o"  
-    },
-}
+    range_chart = json.load(f)
 
 class NonAnalyzableHandException(Exception):
     "Raised when the hand can't be analysed, e.g., the player folds preflop, or nobody calls the player's open raise"
@@ -253,6 +104,7 @@ def main_loop():
     return search_term, matches
 
 def print_range(search_term):
+    # TODO LATER allow convenient format for search
     term = parse('range {}', search_term)
     raise_range = get_range(term[0], 'raise')
     call_range = get_range(term[0], 'call')
@@ -456,7 +308,10 @@ def print_position(position_key, hand):
     hole_cards_suffix = f' {hole_cards}' if hole_cards else ''
 
     print(f'  {position_key.upper()}{hero_suffix}{hole_cards_suffix}')
-    print(f'    {position["action"].capitalize()} as {position["chart_key"]}')
+    if position["chart"]:
+        print(f'    {position["action_description"]} ({position["chart"]["label"]})')
+    else:
+        print(f'    {position["action_description"]}')
     print(f'      {position["range"]}')
 
 def format_cards(cards, with_border=True):
@@ -529,13 +384,60 @@ def parse_hand(segments, hand):
     hand = {**hand, **parse_postflop(segments, hand)}
     
     return hand
+
+def vs_raisers_match(vs_raisers_from_chart, vs_raisers, match_any):
+    if len(vs_raisers_from_chart) != len(vs_raisers): return False
+
+    for from_chart, not_from_chart in zip(vs_raisers_from_chart, vs_raisers):
+        if from_chart == '<ANY>' and match_any: continue
+        if from_chart == not_from_chart: continue
+        return False
+    return True
     
-def get_range(base_range_key, action_key):
-    base = RANGE_CHART.get(base_range_key, {})
-    range = base.get(action_key, 'Missing Chart')
-    if range == 'Missing Chart': return 'Missing Chart'
-    if range == '': return 'Empty Range'
-    return range.replace(' ', ',')
+def format_position_action_description(seat, vs_raisers, action_key):
+    vs_suffix = ' vs '.join(vs_raisers)
+    vs_suffix = ''.join(' vs ' + raiser for raiser in vs_raisers)
+    return f'{action_key.capitalize()} as {seat}{vs_suffix}'
+    
+def find_chart(seat, vs_raisers):
+    exact_matches = [
+        chart for chart in range_chart.values()
+        if chart['seat'] == seat
+        and vs_raisers_match(chart['vs_raisers'], vs_raisers, match_any=False)
+    ]
+
+    any_matches = [
+        chart for chart in range_chart.values()
+        if chart['seat'] == seat
+        and vs_raisers_match(chart['vs_raisers'], vs_raisers, match_any=True)
+    ]
+
+    if len(exact_matches) == 1: return exact_matches[0]
+    if len(exact_matches) > 1: raise Exception(f"Somehow got {len(exact_matches)} exact chart matches for {seat}-{vs_raisers}")
+
+    if len(any_matches) == 1: return any_matches[0]
+    if len(any_matches) > 1: raise Exception(f"Somehow got {len(any_matches)} any chart matches for {seat}-{vs_raisers}")
+
+    return None
+
+def get_range_from_chart(chart, action_key):
+    if not chart: return '<MISSING_CHART>'
+
+    if action_key == 'raise':
+        action_keys = ['raise', 'raise_or_fold', 'raise_or_call', 'raise_or_call_or_fold']
+    elif action_key == 'call':
+        action_keys = ['call', 'call_or_fold', 'raise_or_call', 'raise_or_call_or_fold']
+    else:
+        raise Exception(f'Action lookup not implemented for `{action_key}`')
+
+    ranges = [
+        range for key, range in chart['actions'].items()
+        if key in action_keys and range != ''
+    ]
+    joined_ranges = ','.join(ranges)
+
+    if joined_ranges == '': return 'Empty Range'
+    return joined_ranges
 
 def calculate_preflop_actions_for_chart(hand):
     """
@@ -579,19 +481,27 @@ def calculate_positions(hand):
     
     chart_inputs = gen_preflop_chart_inputs(hand)
 
+    raise_chart = find_chart(chart_inputs['raise']['seat'], chart_inputs['raise']['vs_raisers'])
+    raise_range = get_range_from_chart(raise_chart, 'raise')
+
+    call_chart = find_chart(chart_inputs['call']['seat'], chart_inputs['call']['vs_raisers'])
+    call_range = get_range_from_chart(call_chart, 'call')
+
     positions = [
         {
             'player_id': chart_inputs['raise']['player_id'],
             'seat': chart_inputs['raise']['seat'],
-            'chart_key': chart_inputs['raise']['key'],
-            'range': get_range(chart_inputs['raise']['key'], 'raise'),
+            'action_description': format_position_action_description(chart_inputs['raise']['seat'], chart_inputs['raise']['vs_raisers'], 'raise'),
+            'chart': raise_chart,
+            'range': raise_range,
             'action': 'raise'
         },
         {
             'player_id': chart_inputs['call']['player_id'],
             'seat': chart_inputs['call']['seat'],
-            'chart_key': chart_inputs['call']['key'],
-            'range': get_range(chart_inputs['call']['key'], 'call'),
+            'action_description': format_position_action_description(chart_inputs['call']['seat'], chart_inputs['call']['vs_raisers'], 'call'),
+            'chart': call_chart,
+            'range': call_range,
             'action': 'call'
         }
     ]
@@ -600,38 +510,23 @@ def calculate_positions(hand):
     return { 'oop': positions[0], 'ip': positions[1] }
 
 def gen_preflop_chart_inputs(hand):
-    n_raises = len(hand['preflop']['raises'])
-    raise_player_id = hand['preflop']['raises'][-1]['player_id']
-    call_player_id = hand['preflop']['call']['player_id']
-    raise_seat = hand['preflop']['raises'][-1]['seat']
-    call_seat = hand['preflop']['call']['seat']
-
-    if n_raises == 1:
-        return {
-            'raise': {
-                'key': f'{raise_seat} {format_nth_preflop_raise(1)}',
-                'seat': raise_seat,
-                'player_id': raise_player_id,
-            },
-            'call': {
-                'key': f'{call_seat} vs {raise_seat} {format_nth_preflop_raise(1)}',
-                'seat': call_seat,
-                'player_id': call_player_id,
-            }
-        }
-
-    prev_raise_seat = hand['preflop']['raises'][-2]['seat'] 
+    last_raise = hand['preflop']['raises'][-1]
+    call = hand['preflop']['call']
 
     return {
         'raise': {
-            'key': f'{raise_seat} vs {prev_raise_seat} {format_nth_preflop_raise(n_raises - 1)}',
-            'seat': raise_seat,
-            'player_id': raise_player_id,
+            'seat': last_raise['seat'],
+            'vs_raisers': list(reversed([
+                action['seat'] for action in hand['preflop']['raises'][:-1]
+            ])),
+            'player_id': last_raise['player_id'],
         },
         'call': {
-            'key': f'{call_seat} vs {raise_seat} {format_nth_preflop_raise(n_raises)}',
-            'seat': call_seat,
-            'player_id': call_player_id,
+            'seat': call['seat'],
+            'vs_raisers': list(reversed([
+                action['seat'] for action in hand['preflop']['raises']
+            ])),
+            'player_id': call['player_id'],
         }
     }
 

@@ -7,4 +7,5 @@ Various poker utils
 - `PreflopChartsExtractor.py` - A one-time tool to extract the chart data from `PreflopCharts.pdf` and put it in JSON format
     - Why? We need to represent the charts in some useful data format for `GGPokerHandHistoryParser.py` to access. And screw manually entering in the chart data for all 53 charts, each being a 13x13 grid.
 - `PreflopChartsSearchable.html` - A preflop chart viewer, so you can find the right preflop chart with the minimal amount of key presses. Supports mobile.
-    - Why? The `PreflopCharts.pdf` does not have text-labelled graphs (the label is inside the image), so you cannot CTRL-F to find the right chart. Hence, I need a faster way to find the right chart. (The PDF is also not mobile friendly.) And we have the charts in JSON format because of `PreflopChartsExtractor.py`, so why not use them?
+    - Why? The `PreflopCharts.pdf` does not have text-labelled graphs (the label is inside the image), so you cannot CTRL-F to find the right chart. Hence, I need a faster way to find the right chart. (The PDF is also not mobile friendly.)
+        - And we have the charts in JSON format because of `PreflopChartsExtractor.py`, so why not use them?
