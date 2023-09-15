@@ -46,7 +46,7 @@ with open(CHART_FILE) as f:
 class NonAnalyzableHandException(Exception):
     "Raised when the hand can't be analysed, e.g., the player folds preflop, or nobody calls the player's open raise"
     pass
-class InvalidHoleCardSearchException(Exception):
+class InvalidSearchException(Exception):
     pass
 
 def main():
@@ -57,7 +57,7 @@ def main():
         try:
             print()
             save_to_history_file(*main_loop())
-        except InvalidHoleCardSearchException as e:
+        except InvalidSearchException as e:
             print(e)
         except Exception as e:
             print('-----------------------------------')
@@ -66,24 +66,25 @@ def main():
             print('-----------------------------------')
 
 def main_loop():
-    # TODO hero <pattern> <pattern> search is deprecated
-    # TODO range command we may not keep
 
     print('Enter command, e.g.: ')
-    print('- `#RC1800277957` (hand ID) (requires `extract`ion)')
-    print('- `extract` to extract the data from PokerCraft zip')
-    print('- `last`, or `history` to view recent searches')
-    print('- `all`')
+    print('- `#RC1800277957` - show hand with the given hand ID (requires extraction) ')
+    print('- `e` - extract to extract the data from PokerCraft zip')
+    print('- `l` - repeat the last search')
+    print('- `h` - show search history')
+    print('- `a` - show all hands')
     search_term = input('>>> ').strip()
     search_term = reformat_search_term(search_term)
 
-    if search_term == 'history':
+    if search_term == 'h':
         print_history()
         return search_term, []
     if search_term.find('range ') == 0:
         print_range(search_term)
         return search_term, []
-    if search_term == 'extract':
+        # TODO hero <pattern> <pattern> search is deprecated
+        # TODO range command we may not keep
+    if search_term == 'e':
         extract_downloads()
         return search_term, []
 
@@ -162,7 +163,7 @@ def is_hero_hand_search(search_term):
     return search_term.lower().find('hero ') == 0
 
 def hand_matches_search(lazy_hand, search_term):
-    if search_term == 'all': return True
+    if search_term == 'a': return True
     if is_hero_hand_search(search_term):
         return matches_hero_hole_card_search(lazy_hand, search_term)
     if lazy_hand["id"] == search_term: return True
@@ -192,22 +193,29 @@ def card_pattern_to_regex(pattern):
     return re.compile(pattern.capitalize().replace('x', '.'))
 
 def reformat_search_term(search_term):
-    if search_term == 'last':
+    if search_term in ['h', 'e', 'a']: return search_term
+
+    if search_term == 'l':
         last_term = last_search_term() or ''
         print(f'Searching for: `{last_term}`')
         return last_term.strip()
 
     if search_term.startswith('RC'):
         search_term = '#' + search_term
+
+    if search_term.startswith('#RC'):
+        if not re.match(r'^#RC\d{7,13}$', search_term):
+            raise InvalidSearchException(f'Invalid hand ID `{search_term}`')
+        return search_term
     
     if search_term.startswith('hero'):
         if not validate_hole_card_search(search_term):
-            raise InvalidHoleCardSearchException(f'Invalid hero hole card search: {search_term}')
+            raise InvalidSearchException(f'Invalid hero hole card search: {search_term}')
 
     if validate_hole_card_search(search_term, with_hero_prefix=False):
-        raise InvalidHoleCardSearchException(f'Prefix the card search with `hero`. E.g., {search_term}')
+        raise InvalidSearchException(f'Prefix the card search with `hero`. E.g., {search_term}')
 
-    return search_term
+    raise InvalidSearchException(f'Unknown command {search_term}')
 
 def last_search_term():
     lines = read_history(1)
@@ -259,7 +267,7 @@ def save_to_history_file(search_term, matches):
             f.write('\n')
 
 def format_history_lines(search_term, matches):
-    if search_term in ['last', 'history', 'all', 'extract']: return []
+    if search_term in ['l', 'h', 'a', 'e']: return []
     if search_term.find('range ') == 0: return []
     if len(matches) == 0: return [f'{search_term} - {len(matches)} matches']
     return format_result_count(search_term, matches)
