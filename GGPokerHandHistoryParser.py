@@ -20,6 +20,7 @@ import traceback
 import json
 import re
 import zipfile
+from datetime import datetime
 from pathlib import Path
 
 from parse import *
@@ -51,7 +52,7 @@ class InvalidSearchException(Exception):
 
 def main():
     print(f'Download your GGPoker hand histories into your `{DOWNLOADS_DIR}` directory')
-    print(f'You can then run the `extract` command to decompress them')
+    print(f'You can then run the `e`xtract command to decompress them')
 
     while True:
         try:
@@ -66,14 +67,15 @@ def main():
             print('-----------------------------------')
 
 def main_loop():
-
     print('Enter command, e.g.: ')
+    print('- `e` - extract data from PokerCraft zip')
+    print('- `r` - show recent hands')
     print('- `#RC1800277957` - show hand with the given hand ID (requires extraction) ')
-    print('- `e` - extract to extract the data from PokerCraft zip')
     print('- `l` - repeat the last search')
     print('- `h` - show search history')
     print('- `a` - show all hands')
     search_term = input('>>> ').strip()
+    print()
     search_term = reformat_search_term(search_term)
 
     if search_term == 'h':
@@ -92,32 +94,60 @@ def main_loop():
     files = glob.glob(file_glob)
     files.sort()
 
-    # TODO could become a memory issue with a lot of hands
-    matches = []
-
-    for file in files:
-        lazy_hands = load_hands_from_file(file)
-
+    lazy_hands = load_all_lazy_hands()
+    lazy_hands.sort(key=lambda hand: hand['date'])
+    hands = []
+    
+    if search_term.startswith('#'):
         for lazy_hand in lazy_hands:
-            if not hand_matches_search(lazy_hand, search_term): continue
-
+            if lazy_hand['id'] != search_term: continue
             hand = lazy_hand['parse']()
-            matches.append(hand)
-
-            if is_hero_hand_search(search_term):
-                print_hand_short(hand)
-                continue
-
+            hands.append(hand)
             if 'error' in hand:
                 print_hand_error(hand)
                 continue
-
             print_hand(hand)
+
+    if search_term == 'a':
+        for lazy_hand in lazy_hands:
+            hand = lazy_hand['parse']()
+            if 'error' in hand:
+                print_hand_error(hand)
+                continue
+            print_hand(hand)
+            hands.append(hand)
     
+    if is_hero_hand_search(search_term):
+        for lazy_hand in lazy_hands:
+            if matches_hero_hole_card_search(lazy_hand, search_term):
+                hand = lazy_hand['parse']()
+                print_hand_short(hand)
+                hands.append(hand)
+
+    if search_term == 'r':
+        lazy_hands = lazy_hands[-50:]
+        for lazy_hand in lazy_hands:
+            hand = lazy_hand['parse']()
+            print_hand_short(hand)
+            hands.append(hand)
+
     print()
-    for line in format_result_count(search_term, matches):
+    for line in format_result_count(search_term, hands):
         print(line)
-    return search_term, matches
+    return search_term, hands
+
+def load_all_lazy_hands():
+    file_glob = str(Path(CONTENTS_DIR, Path("GG20*.txt")))
+    files = glob.glob(file_glob)
+    files.sort()
+
+    lazy_hands = []
+
+    for file in files:
+        lazy_hands_from_file = load_hands_from_file(file)
+        lazy_hands.extend(lazy_hands_from_file)
+    
+    return lazy_hands
 
 def extract_downloads():
     file_paths = os.listdir(DOWNLOADS_DIR)
@@ -162,14 +192,6 @@ def print_range(search_term):
 def is_hero_hand_search(search_term):
     return search_term.lower().find('hero ') == 0
 
-def hand_matches_search(lazy_hand, search_term):
-    if search_term == 'a': return True
-    if is_hero_hand_search(search_term):
-        return matches_hero_hole_card_search(lazy_hand, search_term)
-    if lazy_hand["id"] == search_term: return True
-
-    return False
-
 def validate_hole_card_search(search_term, with_hero_prefix=True):
     search_term = search_term.lower()
     valid_cards = 'x23456789tjqka'
@@ -193,12 +215,7 @@ def card_pattern_to_regex(pattern):
     return re.compile(pattern.capitalize().replace('x', '.'))
 
 def reformat_search_term(search_term):
-    if search_term in ['h', 'e', 'a']: return search_term
-
-    if search_term == 'l':
-        last_term = last_search_term() or ''
-        print(f'Searching for: `{last_term}`')
-        return last_term.strip()
+    if search_term in ['h', 'e', 'a', 'r']: return search_term
 
     if search_term.startswith('RC'):
         search_term = '#' + search_term
@@ -207,15 +224,24 @@ def reformat_search_term(search_term):
         if not re.match(r'^#RC\d{7,13}$', search_term):
             raise InvalidSearchException(f'Invalid hand ID `{search_term}`')
         return search_term
+
+    if search_term == 'l':
+        last_term = last_search_term() or ''
+        print(f'Searching for: `{last_term}`')
+        return last_term.strip()
+
+    if search_term.startswith('range'):
+        return search_term
     
     if search_term.startswith('hero'):
         if not validate_hole_card_search(search_term):
             raise InvalidSearchException(f'Invalid hero hole card search: {search_term}')
+        return search_term
 
     if validate_hole_card_search(search_term, with_hero_prefix=False):
         raise InvalidSearchException(f'Prefix the card search with `hero`. E.g., {search_term}')
 
-    raise InvalidSearchException(f'Unknown command {search_term}')
+    raise InvalidSearchException(f'Unknown command `{search_term}`')
 
 def last_search_term():
     lines = read_history(1)
@@ -267,7 +293,7 @@ def save_to_history_file(search_term, matches):
             f.write('\n')
 
 def format_history_lines(search_term, matches):
-    if search_term in ['l', 'h', 'a', 'e']: return []
+    if search_term in ['l', 'h', 'a', 'e', 'r']: return []
     if search_term.find('range ') == 0: return []
     if len(matches) == 0: return [f'{search_term} - {len(matches)} matches']
     return format_result_count(search_term, matches)
@@ -585,11 +611,13 @@ def format_nth_preflop_raise(nth_raise):
 def parse_basic_header_meta(header_lines):
     hand_id, small_blind, big_blind, date_str = parse("Poker Hand {}: Hold'em No Limit (${}/${}) - {}", header_lines[0])
 
+    dt = datetime.strptime(date_str, '%Y/%m/%d %H:%M:%S')
+
     return {
         "id": hand_id,
         "small_blind": float(small_blind),
         "big_blind": float(big_blind),
-        "date": date_str,
+        "date": dt,
     }
 
 def parse_header_players(segments):

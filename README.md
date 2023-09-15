@@ -1,6 +1,6 @@
 # Poker Utils
 
-Various poker utils
+Various poker utils. See each file for installation/usage instructions.
 
 - `GGPokerHandHistoryParser.py` - Takes GGPoker hand histories exported from PokerCraft and formats them such that you can copy the data (almost) directly into a solver, like <https://wasm-postflop.pages.dev/>
     - Why? It takes a while to enter in the hand ranges and the various other fields into a solver, so this saves you time
