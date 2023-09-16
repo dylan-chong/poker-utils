@@ -75,6 +75,7 @@ def main_loop():
     print('- l - repeat the last search')
     print('- h - show search history')
     print('- a - show all hands')
+    print('- c - `c bb co any` to print ranges for BB call, and CO 3Bet vs LJ RFI')
     search_term = input('>>> ').strip()
     print()
     search_term = reformat_search_term(search_term)
@@ -84,6 +85,9 @@ def main_loop():
         return search_term, []
     if search_term == 'e':
         extract_downloads()
+        return search_term, []
+    if search_term.startswith('c '):
+        print_call_and_raise_range(search_term)
         return search_term, []
 
     file_glob = str(Path(CONTENTS_DIR, Path("GG20*.txt")))
@@ -177,7 +181,10 @@ def reformat_search_term(search_term):
     if search_term == 'l':
         last_term = last_search_term() or ''
         print(f'Searching for: `{last_term}`')
-        return last_term.strip()
+        return reformat_search_term(last_term.strip())
+
+    if search_term.startswith('c '):
+        return search_term
 
     raise InvalidSearchException(f'Unknown command `{search_term}`')
 
@@ -232,6 +239,7 @@ def save_to_history_file(search_term, matches):
 
 def format_history_lines(search_term, matches):
     if search_term in ['l', 'h', 'a', 'e', 'r']: return []
+    if search_term.startswith('c '): return [search_term]
     if len(matches) == 0: return [f'{search_term} - {len(matches)} matches']
     return format_result_count(search_term, matches)
 
@@ -263,7 +271,7 @@ def parse_and_calculate_hand(segments, basic_hand):
             'preflop': { **hand['preflop'], **preflop_actions_for_chart }
         }
 
-        positions = calculate_positions(full_hand)
+        positions = calculate_positions_for_hand(full_hand)
         full_hand = {**hand, **positions}
         return full_hand
     except NonAnalyzableHandException as e:
@@ -312,13 +320,15 @@ def print_position(position_key, hand):
     position = hand[position_key]
     player_id = position['player_id']
     player = hand['players'][player_id]
-    hole_cards = format_cards(player.get('hole_cards', []))
+    hole_cards = player.get('hole_cards', [])
 
     hero_suffix = ' Hero' if player_id == 'Hero' else ''
-    hole_cards_suffix = f' {hole_cards}' if hole_cards else ''
+    hole_cards_suffix = f' {format_cards(hole_cards)}' if hole_cards else ''
 
     print(f'  {position_key.upper()}{hero_suffix}{hole_cards_suffix}')
+    print_position_chart(position)
 
+def print_position_chart(position):
     if position["chart"]:
         print(f'    {position["action_description"]} ({position["chart"]["label"]})')
     else:
@@ -327,7 +337,48 @@ def print_position(position_key, hand):
     for line in format_range_wrapped(position['range'], indent='      ', width=79):
         print(line)
 
+def print_call_and_raise_range(search_term):
+    chart_inputs = parse_range_search_term(search_term)
+    positions = calculate_positions(chart_inputs)
+    print(f'  OOP')
+    print_position_chart(positions['oop'])
+    print(f'  IP')
+    print_position_chart(positions['ip'])
+
+def parse_range_search_term(search_term):
+    seats = re.split(r'\s+', search_term.upper())[1:]
+    if len(seats) < 2:
+        raise InvalidSearchException('Need at least 2 seats to print ranges')
+
+    valid_seats = list(SEAT_NUM_TO_SEAT.values())
+    for seat in seats:
+        if seat not in valid_seats:
+            valid_seats_lower = [vs.lower() for vs in valid_seats]
+            raise InvalidSearchException('Seats must be one of: ' + ', '.join(valid_seats_lower))
+
+    call_seat = seats[0]
+    call_vs_seats = seats[1:]
+    raise_seat = seats[1]
+    raise_vs_seats = seats[2:]
+
+    if 'ANY' in [call_seat, raise_seat]:
+        raise InvalidSearchException('First two seats cannot be `any`')
+    
+    return {
+        'raise': {
+            'seat': raise_seat,
+            'vs_raisers': raise_vs_seats
+        },
+        'call': {
+            'seat': call_seat,
+            'vs_raisers': call_vs_seats
+        }
+    }
+
 def format_range_wrapped(range, indent, width):
+    if range is None: return [indent + 'Missing chart']
+    if len(range) == 0: return [indent + 'No hands in range']
+
     lines = [indent]
     for i, card in enumerate(range):
         if len(lines[-1]) + len(card) >= width:
@@ -416,10 +467,19 @@ def vs_raisers_match(vs_raisers_from_chart, vs_raisers, match_any):
         return False
     return True
     
-def format_position_action_description(seat, vs_raisers, action_key):
+def format_action_description(seat, vs_raisers, action_key):
+    action = 'Call' if action_key == 'call' else format_n_bet(len(vs_raisers) + 2)
     vs_suffix = ' vs '.join(vs_raisers)
-    vs_suffix = ''.join(f' vs {raiser} raise' for raiser in vs_raisers)
-    return f'{action_key.capitalize()} as {seat}{vs_suffix}'
+    vs_suffix = ''.join(
+        f' vs {raiser} {format_n_bet(len(vs_raisers) - i + 1)}'
+        for i, raiser in enumerate(vs_raisers)
+    )
+    return f'{action} as {seat}{vs_suffix}'
+
+def format_n_bet(n):
+    if n < 2: raise Exception(f"Invalid n bet: {n}")
+    if n == 2: return 'RFI'
+    return f'{n}Bet'
     
 def find_chart(seat, vs_raisers):
     exact_matches = [
@@ -443,7 +503,7 @@ def find_chart(seat, vs_raisers):
     return None
 
 def get_range_from_chart(chart, action_key):
-    if not chart: return '<MISSING_CHART>'
+    if not chart: return None
 
     if action_key == 'raise':
         action_to_suffix = {
@@ -466,10 +526,7 @@ def get_range_from_chart(chart, action_key):
         add_suffixes(chart['actions'][action], suffix)
         for action, suffix in action_to_suffix.items()
     ]
-    joined_ranges = sum(ranges, [])
-
-    if len(joined_ranges) == 0: return 'Empty Range'
-    return joined_ranges
+    return sum(ranges, [])
 
 def add_suffixes(cards_str, suffix):
     cards = cards_str.split(',')
@@ -511,12 +568,14 @@ def validate_hero_played_preflop(hand):
     if actions[last_hero_action_i]['action'] == 'folds':
         raise NonAnalyzableHandException("Last hero action is a fold")
 
-def calculate_positions(hand):
+def calculate_positions_for_hand(hand):
     if 'error' in hand:
         return { 'id': hand['id'], 'error': hand['error'] }
     
     chart_inputs = gen_preflop_chart_inputs(hand)
+    return calculate_positions(chart_inputs)
 
+def calculate_positions(chart_inputs):
     raise_chart = find_chart(chart_inputs['raise']['seat'], chart_inputs['raise']['vs_raisers'])
     raise_range = get_range_from_chart(raise_chart, 'raise')
 
@@ -525,17 +584,25 @@ def calculate_positions(hand):
 
     positions = [
         {
-            'player_id': chart_inputs['raise']['player_id'],
+            'player_id': chart_inputs['raise'].get('player_id'),
             'seat': chart_inputs['raise']['seat'],
-            'action_description': format_position_action_description(chart_inputs['raise']['seat'], chart_inputs['raise']['vs_raisers'], 'raise'),
+            'action_description': format_action_description(
+                chart_inputs['raise']['seat'],
+                chart_inputs['raise']['vs_raisers'],
+                'raise'
+            ),
             'chart': raise_chart,
             'range': raise_range,
             'action': 'raise'
         },
         {
-            'player_id': chart_inputs['call']['player_id'],
+            'player_id': chart_inputs['call'].get('player_id'),
             'seat': chart_inputs['call']['seat'],
-            'action_description': format_position_action_description(chart_inputs['call']['seat'], chart_inputs['call']['vs_raisers'], 'call'),
+            'action_description': format_action_description(
+                chart_inputs['call']['seat'],
+                chart_inputs['call']['vs_raisers'],
+                'call'
+            ),
             'chart': call_chart,
             'range': call_range,
             'action': 'call'
