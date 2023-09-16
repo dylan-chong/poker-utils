@@ -75,7 +75,7 @@ def main_loop():
     print('- l - repeat the last search')
     print('- h - show search history')
     print('- a - show all hands')
-    print('- c - `c bb co any` to print ranges for BB call, and CO 3Bet vs LJ RFI')
+    print('- c - `c bb co lj` to print heads up ranges for BB call, and CO 3Bet vs LJ RFI')
     search_term = input('>>> ').strip()
     print()
     search_term = reformat_search_term(search_term)
@@ -106,7 +106,7 @@ def main_loop():
             if 'error' in hand:
                 print_hand_error(hand)
                 continue
-            print_hand(hand)
+            print_hand(hand, wait_bewteen_sections=True)
 
     if search_term == 'a':
         for lazy_hand in lazy_hands:
@@ -119,7 +119,7 @@ def main_loop():
     
     if search_term == 'r':
         for lazy_hand in reversed(lazy_hands):
-            if len(hands) == 20: break
+            if len(hands) == 50: break
             hand = lazy_hand['parse']()
             if 'error' in hand: continue
             hands.append(hand)
@@ -291,7 +291,7 @@ def print_hand_error(hand):
     print_hand_title(hand)
     print(f'  {hand["error"]}')
 
-def print_hand(hand):
+def print_hand(hand, wait_bewteen_sections=False):
     print()
     print_hand_title(hand)
     print_position('oop', hand)
@@ -303,11 +303,24 @@ def print_hand(hand):
     print(f'  Effective Stack')
     print(f'    ${calculate_effective_stack_size_on_flop(hand):.2f}')
     print_actions('preflop', hand, include_folds=False, include_aggressor=True)
-    print(f'  -------------------------')
+
+    if wait_bewteen_sections:
+        print(f'')
+        input(f'Press ENTER to see the flop ')
+        print(f'-------------------------')
+    else:
+        print(f'  -------------------------')
+
     print_actions('flop', hand, board_cards = (0, 3))
     print_actions('turn', hand, board_cards = (3, 4))
     print_actions('river', hand, board_cards = (4, 5))
-    print()
+
+    if wait_bewteen_sections:
+        print(f'')
+        input(f'Press ENTER to continue ')
+    else:
+        print()
+
 
 def print_hand_short(hand):
     if 'error' in hand: error_suffix = f'not analysable ({hand["error"]})'
