@@ -419,10 +419,16 @@ def print_actions(round_key, hand, include_folds=True, include_aggressor=False, 
         print(f'    {player_display} {action["action"]} {tail}')
     
     if not include_aggressor: return
+    print_round_aggressor(round_key, hand)
+
+def print_round_aggressor(round_key, hand):
+    actions = hand[round_key]['actions']
     last_aggressor_i = find_index_where(lambda act: act['action'] in ['raises', 'bets'], actions, from_end=True)
     if last_aggressor_i is None: return
+
     postflop_seat = get_postflop_seat(actions[last_aggressor_i]['player_id'], hand)
     if postflop_seat is None: return
+
     print(f'  {round_key.capitalize()} aggressor')
     print(f'    {postflop_seat.upper()}')
 
