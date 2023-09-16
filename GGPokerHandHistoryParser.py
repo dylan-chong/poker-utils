@@ -329,10 +329,11 @@ def print_position(position_key, hand):
 
 def format_range_wrapped(range, indent, width):
     lines = [indent]
-    for word in range.split(','):
-        if len(lines[-1]) + len(word) >= width:
+    for i, card in enumerate(range):
+        if len(lines[-1]) + len(card) >= width:
             lines.append(indent)
-        lines[-1] = lines[-1] + word + ','
+        comma = ',' if i < len(range) - 1 else ''
+        lines[-1] = lines[-1] + card + comma
     return lines
 
 def format_cards(cards, with_border=True):
@@ -445,20 +446,34 @@ def get_range_from_chart(chart, action_key):
     if not chart: return '<MISSING_CHART>'
 
     if action_key == 'raise':
-        action_keys = ['raise', 'raise_or_fold', 'raise_or_call', 'raise_or_call_or_fold']
+        action_to_suffix = {
+            'raise': '',
+            'raise_or_fold': ':0.5',
+            'raise_or_call': ':0.5',
+            'raise_or_call_or_fold': ':0.35'
+        }
     elif action_key == 'call':
-        action_keys = ['call', 'call_or_fold', 'raise_or_call', 'raise_or_call_or_fold']
+        action_to_suffix = {
+            'call': '',
+            'call_or_fold': ':0.5',
+            'raise_or_call': ':0.5',
+            'raise_or_call_or_fold': ':0.35'
+        }
     else:
         raise Exception(f'Action lookup not implemented for `{action_key}`')
 
     ranges = [
-        range for key, range in chart['actions'].items()
-        if key in action_keys and range != ''
+        add_suffixes(chart['actions'][action], suffix)
+        for action, suffix in action_to_suffix.items()
     ]
-    joined_ranges = ','.join(ranges)
+    joined_ranges = sum(ranges, [])
 
-    if joined_ranges == '': return 'Empty Range'
+    if len(joined_ranges) == 0: return 'Empty Range'
     return joined_ranges
+
+def add_suffixes(cards_str, suffix):
+    cards = cards_str.split(',')
+    return [card.strip() + suffix for card in cards if card.strip() != '']
 
 def calculate_preflop_actions_for_chart(hand):
     """
