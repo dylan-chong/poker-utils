@@ -53,7 +53,7 @@ class InvalidSearchException(Exception):
 
 def main():
     print(f'Download your GGPoker hand histories into your `{DOWNLOADS_DIR}` directory')
-    print(f'You can then run the `e`xtract command to decompress them')
+    print(f'from PokerCraft. You can then run the `e`xtract command to decompress them.')
 
     while True:
         try:
@@ -68,14 +68,14 @@ def main():
             print('-----------------------------------')
 
 def main_loop():
-    print('Enter command, e.g.: ')
-    print('- e - extract data from PokerCraft zip')
-    print('- r - show recent analysable hands (where the hero reaches the flop, without limp or check)')
-    print('- #RC1800277957 - show hand with the given hand ID (requires extraction) ')
-    print('- l - repeat the last search')
-    print('- h - show search history')
-    print('- a - show all hands')
-    print('- c - `c bb co lj` to print heads up ranges for BB call, and CO 3Bet vs LJ RFI')
+    print(f'Enter command, e.g.: ')
+    print(f'- e - extract data from PokerCraft zip in your `{DOWNLOADS_DIR}` directory')
+    print(f'- r - show recent analysable hands (where the hero reaches the flop, without limp or check)')
+    print(f'- #RC1800277957 - show hand with the given hand ID (requires extraction) ')
+    print(f'- l - repeat the last search')
+    print(f'- h - show search history')
+    print(f'- c - `c bb co lj` to print heads up ranges for BB call, vs CO 3Bet vs LJ RFI')
+    print(f'- a - show all hands')
     search_term = input('>>> ').strip()
     print()
     search_term = reformat_search_term(search_term)
@@ -180,7 +180,7 @@ def reformat_search_term(search_term):
 
     if search_term == 'l':
         last_term = last_search_term() or ''
-        print(f'Searching for: `{last_term}`')
+        print(f'Last search term: `{last_term}`')
         return reformat_search_term(last_term.strip())
 
     if search_term.startswith('c '):
@@ -305,7 +305,6 @@ def print_hand(hand, wait_bewteen_sections=False):
     print_actions('preflop', hand, include_folds=False, include_aggressor=True)
 
     if wait_bewteen_sections:
-        print(f'')
         input(f'Press ENTER to see the flop ')
         print(f'-------------------------')
     else:
@@ -318,9 +317,9 @@ def print_hand(hand, wait_bewteen_sections=False):
     if wait_bewteen_sections:
         print(f'')
         input(f'Press ENTER to continue ')
+        print(f'-------------------------')
     else:
         print()
-
 
 def print_hand_short(hand):
     if 'error' in hand: error_suffix = f'not analysable ({hand["error"]})'
