@@ -4,6 +4,7 @@ You will have to run PreflopChartsExtractor.py to produce the charts JSON. See t
 
 # Deps
 pip3 install parse
+pip3 install pyperclip
 
 # Run
 python3 GGPokerHandHistoryParser.py
@@ -25,6 +26,7 @@ from datetime import datetime
 from pathlib import Path
 
 from parse import *
+import pyperclip
 
 SEAT_NUM_TO_SEAT = {
     1: 'BTN',
@@ -106,7 +108,7 @@ def main_loop():
             if 'error' in hand:
                 print_hand_error(hand)
                 continue
-            print_hand(hand, wait_bewteen_sections=True)
+            print_hand(hand, copy_to_clipboard=True)
 
     if search_term == 'a':
         for lazy_hand in lazy_hands:
@@ -239,7 +241,7 @@ def save_to_history_file(search_term, matches):
 
 def format_history_lines(search_term, matches):
     if search_term in ['l', 'h', 'a', 'e', 'r']: return []
-    if search_term.startswith('c '): return [search_term]
+    if search_term.startswith('c '): return []
     if len(matches) == 0: return [f'{search_term} - {len(matches)} matches']
     return format_result_count(search_term, matches)
 
@@ -291,7 +293,7 @@ def print_hand_error(hand):
     print_hand_title(hand)
     print(f'  {hand["error"]}')
 
-def print_hand(hand, wait_bewteen_sections=False):
+def print_hand(hand, copy_to_clipboard=False):
     print()
     print_hand_title(hand)
     print_position('oop', hand)
@@ -304,8 +306,10 @@ def print_hand(hand, wait_bewteen_sections=False):
     print(f'    ${calculate_effective_stack_size_on_flop(hand):.2f}')
     print_actions('preflop', hand, include_folds=False, include_aggressor=True)
 
-    if wait_bewteen_sections:
-        input(f'Press ENTER to see the flop ')
+    if copy_to_clipboard:
+        input(f'Press ENTER to copy Desktop Postflop JSON to clipboard')
+        pyperclip.copy(gen_desktop_postflop_json(hand))
+        print(f'Copied!')
         print(f'-------------------------')
     else:
         print(f'  -------------------------')
@@ -314,7 +318,7 @@ def print_hand(hand, wait_bewteen_sections=False):
     print_actions('turn', hand, board_cards = (3, 4))
     print_actions('river', hand, board_cards = (4, 5))
 
-    if wait_bewteen_sections:
+    if copy_to_clipboard:
         print(f'')
         input(f'Press ENTER to continue ')
         print(f'-------------------------')
@@ -443,6 +447,40 @@ def print_round_aggressor(round_key, hand):
 
     print(f'  {round_key.capitalize()} aggressor')
     print(f'    {postflop_seat.upper()}')
+
+def gen_desktop_postflop_json(hand):
+    object = {
+        "oopRange": ','.join(hand['oop']['range'] or ''),
+        "ipRange": ','.join(hand['ip']['range'] or ''),
+        "config": {
+            "board": hand['board'][0:3],
+            "startingPot": dollars_to_cents(hand["preflop"]["pot"]),
+            "effectiveStack": dollars_to_cents(calculate_effective_stack_size_on_flop(hand)),
+            "rakePercent": 5,
+            "rakeCap": 0,
+            "donkOption": False,
+            "oopFlopBet": "50, 75",
+            "oopFlopRaise": "60",
+            "oopTurnBet": "50, 75",
+            "oopTurnRaise": "60",
+            "oopTurnDonk": "",
+            "oopRiverBet": "50, 75",
+            "oopRiverRaise": "60",
+            "oopRiverDonk": "",
+            "ipFlopBet": "50, 75",
+            "ipFlopRaise": "60",
+            "ipTurnBet": "50, 75",
+            "ipTurnRaise": "60",
+            "ipRiverBet": "50, 75",
+            "ipRiverRaise": "60",
+            "addAllInThreshold": 150,
+            "forceAllInThreshold": 20,
+            "mergingThreshold": 10,
+            "addedLines": "",
+            "removedLines": ""
+        }
+    } 
+    return json.dumps(object, indent=2)
 
 def format_player_name(player_id, hand):
     player = hand['players'][player_id]
@@ -881,6 +919,11 @@ def parse_shown_cards(segments, hand):
         players[player_id]['hole_cards'] = cards
 
     return players
+
+def dollars_to_cents(dollars, should_round=True):
+    cents = 100 * dollars
+    if should_round: return int(round(cents))
+    return cents
 
 if __name__ == '__main__':
     main()
