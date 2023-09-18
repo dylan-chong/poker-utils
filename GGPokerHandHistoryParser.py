@@ -21,7 +21,7 @@ import traceback
 import json
 import re
 import zipfile
-import textwrap
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -54,7 +54,7 @@ class InvalidSearchException(Exception):
     pass
 
 def main():
-    print(f'Download your GGPoker hand histories into your `{DOWNLOADS_DIR}` directory')
+    print(f'Download your GGPoker hand history zips into your `{DOWNLOADS_DIR}` directory')
     print(f'from PokerCraft. You can then run the `e`xtract command to decompress them.')
 
     while True:
@@ -71,7 +71,6 @@ def main():
 
 def main_loop():
     print(f'Enter command, e.g.: ')
-    print(f'- e - extract data from PokerCraft zip in your `{DOWNLOADS_DIR}` directory')
     print(f'- r - show recent analysable hands (where the hero reaches the flop, without limp or check)')
     print(f'- #RC1800277957 - show hand with the given hand ID (requires extraction) ')
     print(f'- l - repeat the last search')
@@ -85,16 +84,9 @@ def main_loop():
     if search_term == 'h':
         print_history()
         return search_term, []
-    if search_term == 'e':
-        extract_downloads()
-        return search_term, []
     if search_term.startswith('c '):
         print_call_and_raise_range(search_term)
         return search_term, []
-
-    file_glob = str(Path(CONTENTS_DIR, Path("GG20*.txt")))
-    files = glob.glob(file_glob)
-    files.sort()
 
     lazy_hands = load_all_lazy_hands()
     lazy_hands.sort(key=lambda hand: hand['date'])
@@ -108,7 +100,7 @@ def main_loop():
             if 'error' in hand:
                 print_hand_error(hand)
                 continue
-            print_hand(hand, copy_to_clipboard=True)
+            print_hand(hand, wait_between_sections=True)
 
     if search_term == 'a':
         for lazy_hand in lazy_hands:
@@ -134,7 +126,9 @@ def main_loop():
     return search_term, hands
 
 def load_all_lazy_hands():
-    file_glob = str(Path(CONTENTS_DIR, Path("GG20*.txt")))
+    files_dir = extract_downloads()
+
+    file_glob = str(Path(files_dir, Path("GG20*.txt")))
     files = glob.glob(file_glob)
     files.sort()
 
@@ -157,6 +151,8 @@ def extract_downloads():
     ]
     zip_paths.sort(key=lambda path: os.path.getmtime(path))
 
+    temp_dir = tempfile.TemporaryDirectory().name
+
     extracted_files = []
     for path in zip_paths:
         with zipfile.ZipFile(path, 'r') as zip:
@@ -165,9 +161,10 @@ def extract_downloads():
                 if re.match(r'^GG20.*\.txt$', file)
             ]
             extracted_files.extend(files)
-            zip.extractall(CONTENTS_DIR, files)
+            zip.extractall(temp_dir, files)
     
     print(f'{len(extracted_files)} files extracted from {len(zip_paths)} zips')
+    return temp_dir
 
 def reformat_search_term(search_term):
     if search_term in ['h', 'e', 'a', 'r']: return search_term
@@ -293,7 +290,7 @@ def print_hand_error(hand):
     print_hand_title(hand)
     print(f'  {hand["error"]}')
 
-def print_hand(hand, copy_to_clipboard=False):
+def print_hand(hand, wait_between_sections=False):
     print()
     print_hand_title(hand)
     print_position('oop', hand)
@@ -306,11 +303,11 @@ def print_hand(hand, copy_to_clipboard=False):
     print(f'    ${calculate_effective_stack_size_on_flop(hand):.2f}')
     print_actions('preflop', hand, include_folds=False, include_aggressor=True)
 
-    if copy_to_clipboard:
-        input(f'Press ENTER to copy Desktop Postflop JSON to clipboard')
+    if wait_between_sections:
         pyperclip.copy(gen_desktop_postflop_json(hand))
-        print(f'Copied!')
+        print(f'Copied Desktop Postflop JSON to clipboard.')
         print(f'-------------------------')
+        input(f'Press ENTER to continue ')
     else:
         print(f'  -------------------------')
 
@@ -318,7 +315,7 @@ def print_hand(hand, copy_to_clipboard=False):
     print_actions('turn', hand, board_cards = (3, 4))
     print_actions('river', hand, board_cards = (4, 5))
 
-    if copy_to_clipboard:
+    if wait_between_sections:
         print(f'')
         input(f'Press ENTER to continue ')
         print(f'-------------------------')
