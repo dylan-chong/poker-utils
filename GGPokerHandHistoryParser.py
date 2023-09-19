@@ -434,18 +434,23 @@ def print_actions(round_key, hand, include_folds=True, include_aggressor=False, 
     if not include_aggressor: return
     print_round_aggressor(round_key, hand)
 
-def print_round_aggressor(round_key, hand):
+def get_round_aggressor(round_key, hand):
     actions = hand[round_key]['actions']
     last_aggressor_i = find_index_where(lambda act: act['action'] in ['raises', 'bets'], actions, from_end=True)
-    if last_aggressor_i is None: return
+    if last_aggressor_i is None: return None
 
     postflop_seat = get_postflop_seat(actions[last_aggressor_i]['player_id'], hand)
-    if postflop_seat is None: return
+    if postflop_seat is None: return None
+    return postflop_seat
 
+def print_round_aggressor(round_key, hand):
+    postflop_seat = get_round_aggressor(round_key, hand)
+    if not postflop_seat: return
     print(f'  {round_key.capitalize()} aggressor')
     print(f'    {postflop_seat.upper()}')
 
 def gen_desktop_postflop_json(hand):
+    preflop_aggressor = get_round_aggressor('preflop', hand)
     object = {
         "oopRange": ','.join(hand['oop']['range'] or ''),
         "ipRange": ','.join(hand['ip']['range'] or ''),
@@ -456,7 +461,7 @@ def gen_desktop_postflop_json(hand):
             "rakePercent": 5,
             "rakeCap": 0,
             "donkOption": False,
-            "oopFlopBet": "50, 75",
+            "oopFlopBet": "50, 75" if preflop_aggressor == 'oop' else "",
             "oopFlopRaise": "60",
             "oopTurnBet": "50, 75",
             "oopTurnRaise": "60",
