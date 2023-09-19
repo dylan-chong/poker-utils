@@ -249,7 +249,9 @@ def format_result_count(search_term, matches):
 
     non_analysable = [hand for hand in matches if 'error' in hand]
     non_analysable_suffix = '' if len(non_analysable) == 0 else f', {len(non_analysable)} not'
-    counts = f'{len(match_cards)} analysable{non_analysable_suffix}'
+
+    count_label = 'recent analysable' if search_term == 'r' else 'analysable'
+    counts = f'{len(match_cards)} {count_label}{non_analysable_suffix}'
 
     if len(match_cards) == 0: matches_joined = ''
     else: matches_joined = ' - ' + ', '.join(match_cards)
