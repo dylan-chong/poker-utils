@@ -38,8 +38,7 @@ SEAT_NUM_TO_SEAT = {
 }
 POSTFLOP_SEAT_ORDER = ['SB', 'BB', 'LJ', 'HJ', 'CO', 'BTN']
 DOWNLOADS_DIR = Path(Path.home(), Path('Downloads'))
-CONTENTS_DIR = Path(DOWNLOADS_DIR, Path('GG'))
-LOG_FILE_PATH = Path(CONTENTS_DIR, Path('history.txt'))
+LOG_FILE_PATH = Path(DOWNLOADS_DIR, Path('GG'), Path('history.txt'))
 
 UUID_REGEX = r'^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$'
 
@@ -54,8 +53,7 @@ class InvalidSearchException(Exception):
     pass
 
 def main():
-    print(f'Download your GGPoker hand history zips into your `{DOWNLOADS_DIR}` directory')
-    print(f'from PokerCraft. You can then run the `e`xtract command to decompress them.')
+    print(f'Download your GG PokerCraft hand history zips into your `{DOWNLOADS_DIR}` directory')
 
     while True:
         try:
@@ -912,6 +910,7 @@ def parse_shown_cards(segments, hand):
 
     players = {id: {**player} for id, player in hand['players'].items()}
     for player_id, cards_str in shows:
+        if player_id == 'Hero': continue
         cards = cards_str.split(']')[0].split(' ')
         players[player_id]['hole_cards'] = cards
 
