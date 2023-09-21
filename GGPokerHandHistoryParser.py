@@ -299,7 +299,7 @@ def print_hand(hand, wait_between_sections=False):
     print_position('oop', hand)
     print_position('ip', hand)
     print(f'  Board')
-    print(f'    [{" ".join(hand.get("board", []))}]')
+    print(f'    {format_cards(hand.get("board", []), sort=False)}')
     print(f'  Starting Pot')
     print(f'    ${hand["preflop"]["pot"]:.2f}')
     print(f'  Effective Stack')
@@ -403,10 +403,11 @@ def format_range_wrapped(range, indent, width):
         lines[-1] = lines[-1] + card + comma
     return lines
 
-def format_cards(cards, with_border=True):
+def format_cards(cards, with_border=True, sort=True):
     cards = list(cards)
-    cards.sort(key=card_id_from_str)
-    cards.reverse()
+    if sort:
+        cards.sort(key=card_id_from_str)
+        cards.reverse()
     joined = ' '.join(cards)
     if not with_border: return joined
     return f'[{joined}]'
@@ -433,7 +434,7 @@ def print_actions(round_key, hand, include_folds=True, include_aggressor=False, 
     if round_key not in hand: return
 
     folds_suffix = '' if include_folds else ' (excluding folds)'
-    board_suffix = '' if board_cards == (0, 0) else f' {format_cards(hand["board"][board_cards[0]:board_cards[1]])}'
+    board_suffix = '' if board_cards == (0, 0) else f' {format_cards(hand["board"][board_cards[0]:board_cards[1]], sort=False)}'
     print(f'  {round_key.capitalize()}{folds_suffix}{board_suffix}')
 
     actions = hand[round_key]['actions']
