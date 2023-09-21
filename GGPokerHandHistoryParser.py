@@ -76,7 +76,7 @@ def main_loop():
     print(f'- #RC1800277957 - show hand with the given hand ID (requires extraction) ')
     print(f'- l - repeat the last search')
     print(f'- h - show search history')
-    print(f'- c - `c bb co lj` to print heads up ranges for BB call, vs CO 3Bet vs LJ RFI')
+    print(f'- c - `c btn co lj` to print heads up ranges for BTN call, vs CO 3Bet vs LJ RFI')
     print(f'- a - show all hands')
     search_term = input('>>> ').strip()
     print()
