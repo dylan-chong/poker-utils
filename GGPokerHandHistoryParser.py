@@ -113,12 +113,15 @@ def main_loop():
             hands.append(hand)
     
     if search_term == 'r':
+        hands_by_id = {}
         for lazy_hand in reversed(lazy_hands):
-            if len(hands) == 50: break
+            if len(hands_by_id) == 50: break
+            if lazy_hand['id'] in hands_by_id: continue
             hand = lazy_hand['parse']()
             if 'error' in hand: continue
-            hands.append(hand)
-        hands = list(reversed(hands))
+            hands_by_id[hand['id']] = hand
+        hands = list(hands_by_id.values())
+        hands.sort(key=lambda hand: hand['date'])
         for hand in hands: print_hand_short(hand)
 
     print()
