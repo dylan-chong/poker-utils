@@ -1092,7 +1092,7 @@
             const seatButtonBar = document.body.querySelector('.seat-button-bar')
             const seatButtonTemplate = document.body.querySelector('.search-seat-button')
 
-            for (let seat of SEATS) {
+            for (let seat of [...SEATS].reverse()) {
                 const seatButton = seatButtonTemplate.cloneNode()
                 seatButton.style.display = ''
                 seatButton.innerText = seat

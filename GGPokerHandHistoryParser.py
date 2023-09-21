@@ -613,6 +613,8 @@ def calculate_preflop_actions_for_chart(hand):
     raises = [action for action in actions if action['action'] == 'raises']
     final_raise_calls = [ action for action in actions[last_raise_action_i + 1:] if action['action'] == 'calls']
 
+    if len(final_raise_calls) == 0:
+        raise NonAnalyzableHandException("There was no preflop caller")
     if len(final_raise_calls) > 1:
         raise NonAnalyzableHandException("Solvers will not support multiway pots")
 
