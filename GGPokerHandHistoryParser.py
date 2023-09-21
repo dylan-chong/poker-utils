@@ -37,6 +37,9 @@ SEAT_NUM_TO_SEAT = {
     6: 'CO',
 }
 POSTFLOP_SEAT_ORDER = ['SB', 'BB', 'LJ', 'HJ', 'CO', 'BTN']
+RANKS = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"]
+SUIT_LETTERS = ["c", "d", "h", "s"]
+
 DOWNLOADS_DIR = Path(Path.home(), Path('Downloads'))
 LOG_FILE_PATH = Path(DOWNLOADS_DIR, Path('GG'), Path('history.txt'))
 
@@ -401,9 +404,24 @@ def format_range_wrapped(range, indent, width):
     return lines
 
 def format_cards(cards, with_border=True):
+    cards = list(cards)
+    cards.sort(key=card_id_from_str)
+    cards.reverse()
     joined = ' '.join(cards)
     if not with_border: return joined
     return f'[{joined}]'
+
+def card_id(rank, suit):
+    return 4 * rank + suit;
+
+def card_id_from_str(card_str):
+    pattern = f'^([${"".join(RANKS)}])([${"".join(SUIT_LETTERS)}])$'
+    match = re.match(pattern, card_str, re.I)
+    if not match: return None
+
+    rank = RANKS.index(match[1].upper())
+    suit = SUIT_LETTERS.index(match[2].lower())
+    return card_id(rank, suit)
 
 def format_position_stacks(position_key, hand):
     player_id = hand[position_key]["player_id"]
