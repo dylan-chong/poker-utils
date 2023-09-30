@@ -313,7 +313,7 @@ def print_hand(hand, wait_between_sections=False):
         pyperclip.copy(gen_desktop_postflop_json(hand))
         print(f'Copied Desktop Postflop JSON to clipboard.')
         print(f'-------------------------')
-        input(f'Press ENTER to continue ')
+        input(f'Press ENTER to show postflop actions ')
     else:
         print(f'  -------------------------')
 
@@ -480,10 +480,11 @@ def gen_desktop_postflop_json(hand):
             "board": hand['board'][0:3],
             "startingPot": dollars_to_cents(hand["preflop"]["pot"]),
             "effectiveStack": dollars_to_cents(calculate_effective_stack_size_on_flop(hand)),
-            "rakePercent": 5,
+            "rakePercent": 0,
             "rakeCap": 0,
             "donkOption": False,
             "oopFlopBet": "50, 75" if preflop_aggressor == 'oop' else "",
+            # TODO adapt these numbers based on ranges 
             "oopFlopRaise": "60",
             "oopTurnBet": "50, 75",
             "oopTurnRaise": "60",
@@ -500,7 +501,7 @@ def gen_desktop_postflop_json(hand):
             "addAllInThreshold": 150,
             "forceAllInThreshold": 20,
             "mergingThreshold": 10,
-            "addedLines": "",
+            "addedLines": gen_postflop_bet_lines(hand),
             "removedLines": ""
         }
     } 
@@ -761,14 +762,16 @@ def parse_preflop_bets(segments, hand):
     for player_id, blind in parse_blinds(segments['header']):
         bets_by_player[player_id].append(blind)
 
-    for player_id, action, bet in parse_bets(segments['preflop'], hand):
+    for action_obj in hand.get('preflop', {}).get('actions', []):
+        action = action_obj['action'] # todo rename to type
         if action == 'folds': continue
         if action == 'checks': continue
-        if action == 'raises': bets_by_player[player_id].append(bet)
+        if action == 'raises':
+            bets_by_player[player_id].append(action_obj['to_amount'])
         if action == 'calls':
             bets = bets_by_player[player_id]
             last_bet = 0 if len(bets) == 0 else bets[-1]
-            bets.append(bet + last_bet)
+            bets.append(action_obj['amount'] + last_bet)
 
     pot = sum(bets[-1] for _, bets in bets_by_player.items() if len(bets) > 0)
     return {
@@ -801,28 +804,6 @@ def parse_blinds(lines):
         if not parsed: continue
         player_id, _, blind_str = parsed
         bets.append((player_id, float(blind_str)))
-    return bets
-
-def parse_bets(lines, hand):
-    bets = []
-    for action_obj in parse_actions(lines, hand):
-        action = action_obj['action']
-        player_id = action_obj['player_id']
-        tail = action_obj['tail']
-
-        if action == 'folds': continue
-        if action == 'checks': continue
-
-        if action == 'raises':
-            _, raise_to = parse('${} to ${}', tail)
-            raise_to_without_all_in = raise_to.replace(' and is all-in', '')
-            bets.append((player_id, action, float(raise_to_without_all_in)))
-        
-        if action == 'calls':
-            call = parse('${}', tail)
-            call_without_all_in = call[0].replace(' and is all-in', '')
-            bets.append((player_id, action, float(call_without_all_in)))
-
     return bets
 
 def parse_board(segments):
@@ -866,13 +847,30 @@ def parse_action(line, hand):
     else:
         action, tail = parse('{} {}', full_action)
 
+    if action == 'bets':
+        bet = parse('${}', tail)
+        amounts = { 'amount': dollars_without_all_in_suffix(bet[0]) }
+    elif action == 'calls':
+        call = parse('${}', tail)
+        amounts = { 'amount': dollars_without_all_in_suffix(call[0]) }
+    elif action == 'raises':
+        _, raise_to = parse('${} to ${}', tail)
+        amounts = { 'to_amount': dollars_without_all_in_suffix(raise_to) }
+    else:
+        amounts = {}
+
     seat = hand['players'][player_id]['seat']
     return {
         'player_id': player_id,
         'action': action,
         'seat': seat,
-        'tail': tail
+        'tail': tail,
+        **amounts
     }
+
+def dollars_without_all_in_suffix(str):
+    return float(str.replace(' and is all-in', ''))
+
 
 def find_index_where(func, iterable, from_end=False):
     with_index = reversed(list(enumerate(iterable))) if from_end else enumerate(iterable)
@@ -951,6 +949,32 @@ def dollars_to_cents(dollars, should_round=True):
     cents = 100 * dollars
     if should_round: return int(round(cents))
     return cents
+
+def gen_postflop_bet_lines(hand):
+    actions_per_round = []
+    for key in ['flop', 'turn', 'river']:
+        actions = hand.get(key, {}).get('actions', [])
+        action_strings = [gen_postflop_action_string(action) for action in actions]
+        actions_per_round.append(action_strings)
+    
+    return "|".join([
+        "-".join([
+            act for act in actions
+            if act
+        ])
+        for actions in actions_per_round
+        if actions
+    ])
+        
+def gen_postflop_action_string(action_obj):
+    action = action_obj['action']
+    if action in ['shows', 'folds']: return ''
+
+    if action == 'checks': return 'X'
+    if action == 'calls': return 'C'
+    if action == 'bets': return f'B{dollars_to_cents(action_obj["amount"])}'
+    if action == 'raises': return f'R{dollars_to_cents(action_obj["to_amount"])}'
+    raise Exception('Unexpected action {act}')
 
 if __name__ == '__main__':
     main()
