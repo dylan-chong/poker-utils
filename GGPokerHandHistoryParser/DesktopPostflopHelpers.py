@@ -43,18 +43,32 @@ def gen_desktop_postflop_json(hand):
     return json.dumps(object, indent=2)
 
 def gen_postflop_bet_lines(hand):
-    actions_per_round = []
+    action_strs_per_round = []
     for key in ['flop', 'turn', 'river']:
         actions = hand.get(key, {}).get('actions', [])
         action_strings = [gen_postflop_action_string(action) for action in actions]
-        actions_per_round.append(action_strings)
-    
+        action_strings = [action_str for action_str in action_strings if action_str]
+        if not action_strings: continue
+        action_strs_per_round.append(action_strings)
+
+    sequence_strings = []
+    for r, round in enumerate(action_strs_per_round):
+        for a, action in enumerate(round):
+            if action in ['X', 'C']: continue
+            sequence_strings.append(gen_bet_sequence_str(action_strs_per_round, r, a))
+
+    return ",".join(sequence_strings)
+
+def gen_bet_sequence_str(action_strs_per_round, last_round_i, last_action_i):
+    rounds = action_strs_per_round[:last_round_i + 1]
+    rounds[-1] = rounds[-1][:last_action_i + 1]
+
     return "|".join([
         "-".join([
             act for act in actions
             if act
         ])
-        for actions in actions_per_round
+        for actions in rounds
         if actions
     ])
         
