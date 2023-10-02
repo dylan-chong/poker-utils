@@ -116,6 +116,7 @@ def parse_preflop_bets(segments, hand):
 
     for action_obj in hand.get('preflop', {}).get('actions', []):
         action = action_obj['action'] # todo rename to type
+        player_id = action_obj['player_id']
         if action == 'folds': continue
         if action == 'checks': continue
         if action == 'raises':
