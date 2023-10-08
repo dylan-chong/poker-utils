@@ -109,39 +109,28 @@ def parse_preflop_actions(preflop_lines, hand):
 
 def parse_preflop_bets(segments, hand):
     # bets the player makes (raising to the latest amount in the list)
-    bets_by_player = {player_id: [] for player_id, _ in hand['players'].items()}
+    bets_by_player = { player_id: [] for player_id in hand['players'].keys() }
 
     for player_id, blind in parse_blinds(segments['header']):
         bets_by_player[player_id].append(blind)
 
-    for action_obj in hand.get('preflop', {}).get('actions', []):
-        action = action_obj['action'] # todo rename to type
-        player_id = action_obj['player_id']
-        if action == 'folds': continue
-        if action == 'checks': continue
-        if action == 'raises':
-            bets_by_player[player_id].append(action_obj['to_amount'])
-        if action == 'calls':
-            bets = bets_by_player[player_id]
-            last_bet = 0 if len(bets) == 0 else bets[-1]
-            bets.append(action_obj['amount'] + last_bet)
-
     pot = sum(bets[-1] for _, bets in bets_by_player.items() if len(bets) > 0)
-    return {
-        'bets': bets_by_player,
-        'new_stacks': calculate_player_stacks(hand, [bets_by_player]),
-        'pot': pot
-    }
-
-def calculate_player_stacks(hand, bets_by_player_list):
-    stacks = {
+    initial_stacks = {
         player_id: player['initial_stack']
         for player_id, player in hand['players'].items()
     }
-    for bets_by_player in bets_by_player_list:
-        for player_id, bets in bets_by_player.items():
-            last_bet = 0 if len(bets) == 0 else bets[-1]
-            stacks[player_id] = stacks[player_id] - last_bet
+
+    return {
+        'bets': bets_by_player,
+        'new_stacks': calculate_player_stacks(hand.get('preflop', {}).get('actions', []), bets_by_player, initial_stacks),
+        'new_pot': pot
+    }
+
+def calculate_player_stacks(bets_by_player, stacks):
+    for player_id, bets in bets_by_player.items():
+        last_bet = 0 if len(bets) == 0 else bets[-1]
+        stacks[player_id] = stacks[player_id] - last_bet
+
     return stacks
 
 def dollars_without_all_in_suffix(str):

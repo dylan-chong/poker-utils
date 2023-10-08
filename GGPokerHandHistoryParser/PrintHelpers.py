@@ -29,7 +29,7 @@ def print_hand(hand, wait_and_copy_json=False):
     print(f'  Board')
     print(f'    {format_cards(hand.get("board", []), sort=False)}')
     print(f'  Starting Pot')
-    print(f'    ${hand["preflop"]["pot"]:.2f}')
+    print(f'    ${hand["preflop"]["new_pot"]:.2f}')
     print(f'  Effective Stack')
     print(f'    ${calculate_effective_stack_size_on_flop(hand):.2f}')
     print_actions('preflop', hand, include_folds=False, include_aggressor=True)

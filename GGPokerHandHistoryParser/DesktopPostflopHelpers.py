@@ -12,7 +12,7 @@ def gen_desktop_postflop_json(hand):
         "ipRange": ','.join(hand['ip']['range'] or ''),
         "config": {
             "board": hand['board'][0:3],
-            "startingPot": dollars_to_cents(hand["preflop"]["pot"]),
+            "startingPot": dollars_to_cents(hand["preflop"]["new_pot"]),
             "effectiveStack": dollars_to_cents(calculate_effective_stack_size_on_flop(hand)),
             "rakePercent": 0,
             "rakeCap": 0,

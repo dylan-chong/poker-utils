@@ -10,7 +10,7 @@ def calculate_effective_stack_size_on_flop(hand):
 def calculate_positions_for_hand(hand):
     if 'error' in hand:
         return { 'id': hand['id'], 'error': hand['error'] }
-    
+
     chart_inputs = gen_preflop_chart_inputs(hand)
     return calculate_positions(chart_inputs)
 
@@ -118,3 +118,27 @@ def get_round_aggressor(round_key, hand):
     postflop_seat = get_postflop_seat(actions[last_aggressor_i]['player_id'], hand)
     if postflop_seat is None: return None
     return postflop_seat
+
+def accumulate_bets(actions, bets_by_player = { player_id: [] for player_id in hand['players'].keys() }, stacks, pot):
+    """Bets the player makes (raising to the latest amount in the list)"""
+
+    for action_obj in hand.get('preflop', {}).get('actions', []):
+        action = action_obj['action'] # todo rename to type
+        player_id = action_obj['player_id']
+        if action == 'folds': continue
+        if action == 'checks': continue
+        if action == 'raises':
+            bets_by_player[player_id].append(action_obj['to_amount'])
+        if action == 'calls':
+            bets = bets_by_player[player_id]
+            last_bet = 0 if len(bets) == 0 else bets[-1]
+            bets.append(action_obj['amount'] + last_bet)
+
+    new_pot = sum(bets[-1] for _, bets in bets_by_player.items() if len(bets) > 0)
+    return {
+        'bets': bets_by_player,
+        # TODO import function?
+        'new_stacks': calculate_player_stacks(bets_by_player, stacks),
+        'new_pot': new_pot
+    }
+

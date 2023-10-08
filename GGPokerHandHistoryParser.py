@@ -1,10 +1,9 @@
 """
-# Setup 
+# Setup
 You will have to run PreflopChartsExtractor.py to produce the charts JSON. See that file for docs
 
 # Deps
-pip3 install parse
-pip3 install pyperclip
+pip3 install parse pyperclip
 
 # Run
 python3 GGPokerHandHistoryParser.py
