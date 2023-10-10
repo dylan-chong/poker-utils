@@ -80,8 +80,8 @@ def parse_basic_header_meta(header_lines):
 
     return {
         "id": hand_id,
-        "small_blind": float(small_blind),
-        "big_blind": float(big_blind),
+        "small_blind": parse_money_amount(small_blind),
+        "big_blind": parse_money_amount(big_blind),
         "date": dt,
     }
 
@@ -95,7 +95,7 @@ def parse_header_players(segments):
         players[player_id] = {
             "id": player_id,
             "seat": seat,
-            "initial_stack": float(stack_size_str)
+            "initial_stack": parse_money_amount(stack_size_str)
         }
     
     players['Hero']['hole_cards'] = parse_hero_cards(segments)
@@ -145,7 +145,7 @@ def calculate_player_stacks(hand, bets_by_player_list):
     return stacks
 
 def dollars_without_all_in_suffix(str):
-    return float(str.replace(' and is all-in', ''))
+    return parse_money_amount(str.replace(' and is all-in', ''))
 
 def parse_blinds(lines):
     bets = []
@@ -153,7 +153,7 @@ def parse_blinds(lines):
         parsed = parse('{}: posts {} blind ${}', line)
         if not parsed: continue
         player_id, _, blind_str = parsed
-        bets.append((player_id, float(blind_str)))
+        bets.append((player_id, parse_money_amount(blind_str)))
     return bets
 
 def parse_board(segments):
@@ -238,3 +238,9 @@ def parse_shown_cards(segments, hand):
         players[player_id]['hole_cards'] = cards
 
     return players
+
+def parse_money_amount(amount):
+    # Yeah GGPoker. Wrong % format string somewhere?
+    # It also appears to only appear in '1.\x00\x00' as the initial stack size.
+    # The stack size of '1.00' is also incorrect when it happens (not even close to what it actually is).
+    return float(amount.replace('\x00', '0'))
