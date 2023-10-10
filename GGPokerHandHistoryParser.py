@@ -98,8 +98,10 @@ def reformat_search_term(search_term):
 
     if search_term.startswith('RC'):
         search_term = '#' + search_term
-
     if search_term.startswith('#RC'):
+        if search_term.endswith('.0'):
+            search_term = search_term[:-2]
+
         if not re.match(r'^#RC\d{7,13}$', search_term):
             raise InvalidSearchException(f'Invalid hand ID `{search_term}`')
         return search_term
