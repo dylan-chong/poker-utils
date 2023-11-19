@@ -55,11 +55,12 @@ def main_loop():
 
     hands = load_all_hands()
     hands.sort(key=lambda hand: hand['date'])
+    result_hands = []
     
     if search_term.startswith('#'):
         for hand in hands:
             if hand['id'] != search_term: continue
-            hands.append(hand)
+            result_hands.append(hand)
             if 'error' in hand:
                 print_hand_error(hand)
                 continue
@@ -71,7 +72,7 @@ def main_loop():
                 print_hand_error(hand)
                 continue
             print_hand(hand)
-            hands.append(hand)
+            result_hands.append(hand)
     
     if search_term == 'r':
         hands_by_id = {}
@@ -80,14 +81,14 @@ def main_loop():
             if hand['id'] in hands_by_id: continue
             if 'error' in hand: continue
             hands_by_id[hand['id']] = hand
-        hands = list(hands_by_id.values())
-        hands.sort(key=lambda hand: hand['date'])
-        for hand in hands: print_hand_short(hand)
+        recent_hands = list(hands_by_id.values())
+        recent_hands.sort(key=lambda hand: hand['date'])
+        for hand in recent_hands: print_hand_short(hand)
 
     print()
-    for line in format_result_count(search_term, hands):
+    for line in format_result_count(search_term, result_hands):
         print(line)
-    return search_term, hands
+    return search_term, result_hands
 
 def reformat_search_term(search_term):
     if search_term in ['h', 'e', 'a', 'r']: return search_term
