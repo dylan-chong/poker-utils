@@ -34,13 +34,7 @@ def print_hand(hand, wait_and_copy_json=False):
     print(f'    ${calculate_effective_stack_size_on_flop(hand):.2f}')
     print_actions('preflop', hand, include_folds=False, include_aggressor=True)
 
-    if wait_and_copy_json:
-        pyperclip.copy(wait_and_copy_json)
-        print(f'Copied Desktop Postflop JSON to clipboard.')
-        print(f'-------------------------')
-        input(f'Press ENTER to show postflop actions ')
-    else:
-        print(f'  -------------------------')
+    print(f'  -------------------------')
 
     print_actions('flop', hand, board_cards = (0, 3))
     print_actions('turn', hand, board_cards = (3, 4))
@@ -48,6 +42,8 @@ def print_hand(hand, wait_and_copy_json=False):
 
     if wait_and_copy_json:
         print(f'')
+        pyperclip.copy(wait_and_copy_json)
+        print(f'Copied Desktop Postflop JSON to clipboard.')
         input(f'Press ENTER to continue ')
         print(f'-------------------------')
     else:
