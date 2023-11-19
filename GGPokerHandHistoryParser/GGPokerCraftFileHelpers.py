@@ -4,6 +4,8 @@ import re
 import os
 import zipfile
 import tempfile
+from itertools import chain
+import multiprocessing
 
 from GGPokerHandHistoryParser.GGPokerCraftExportParser import parse_hand_basic, parse_hand
 from GGPokerHandHistoryParser.Utils import DOWNLOADS_DIR, NonAnalyzableHandException
@@ -11,20 +13,17 @@ from GGPokerHandHistoryParser.Calculations import calculate_positions_for_hand, 
 
 UUID_REGEX = r'^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$'
 
-def load_all_lazy_hands():
+def load_all_hands():
     files_dir = extract_downloads()
 
     file_glob = str(Path(files_dir, Path("GG20*.txt")))
     files = glob.glob(file_glob)
     files.sort()
 
-    lazy_hands = []
+    with multiprocessing.Pool() as pool:
+        hands_pages = pool.map(load_hands_from_file, files)
 
-    for file in files:
-        lazy_hands_from_file = load_hands_from_file(file)
-        lazy_hands.extend(lazy_hands_from_file)
-    
-    return lazy_hands
+    return list(chain.from_iterable(hands_pages))
 
 def extract_downloads():
     file_paths = os.listdir(DOWNLOADS_DIR)
@@ -71,11 +70,7 @@ def load_hands_from_file(file):
     lazy_hands = []
     for lines in hands_lines_stripped:
         basic_hand, segments = parse_hand_basic(lines)
-
-        def parse(seg=segments, basic=basic_hand):
-            return parse_and_calculate_hand(seg, basic)
-
-        lazy_hands.append({ **basic_hand, 'parse': parse })
+        lazy_hands.append(parse_and_calculate_hand(segments, basic_hand))
 
     return lazy_hands
 

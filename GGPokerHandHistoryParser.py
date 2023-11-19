@@ -20,7 +20,7 @@ import re
 from parse import *
 
 from GGPokerHandHistoryParser.DesktopPostflopHelpers import gen_desktop_postflop_json
-from GGPokerHandHistoryParser.GGPokerCraftFileHelpers import load_all_lazy_hands
+from GGPokerHandHistoryParser.GGPokerCraftFileHelpers import load_all_hands
 from GGPokerHandHistoryParser.PrintHelpers import print_main_loop_instructions, print_main_loop_instructions, print_hand_error, print_hand, print_hand_short, print_call_and_raise_range, format_result_count
 from GGPokerHandHistoryParser.Utils import InvalidSearchException, DOWNLOADS_DIR
 from GGPokerHandHistoryParser.History import save_to_history_file, last_search_term, print_history
@@ -53,14 +53,12 @@ def main_loop():
         print_call_and_raise_range(search_term)
         return search_term, []
 
-    lazy_hands = load_all_lazy_hands()
-    lazy_hands.sort(key=lambda hand: hand['date'])
-    hands = []
+    hands = load_all_hands()
+    hands.sort(key=lambda hand: hand['date'])
     
     if search_term.startswith('#'):
-        for lazy_hand in lazy_hands:
-            if lazy_hand['id'] != search_term: continue
-            hand = lazy_hand['parse']()
+        for hand in hands:
+            if hand['id'] != search_term: continue
             hands.append(hand)
             if 'error' in hand:
                 print_hand_error(hand)
@@ -68,8 +66,7 @@ def main_loop():
             print_hand(hand, wait_and_copy_json=gen_desktop_postflop_json(hand))
 
     if search_term == 'a':
-        for lazy_hand in lazy_hands:
-            hand = lazy_hand['parse']()
+        for hand in hands:
             if 'error' in hand:
                 print_hand_error(hand)
                 continue
@@ -78,10 +75,9 @@ def main_loop():
     
     if search_term == 'r':
         hands_by_id = {}
-        for lazy_hand in reversed(lazy_hands):
+        for hand in reversed(hands):
             if len(hands_by_id) == 50: break
-            if lazy_hand['id'] in hands_by_id: continue
-            hand = lazy_hand['parse']()
+            if hand['id'] in hands_by_id: continue
             if 'error' in hand: continue
             hands_by_id[hand['id']] = hand
         hands = list(hands_by_id.values())
