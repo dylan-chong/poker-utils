@@ -35,8 +35,10 @@ def gen_desktop_postflop_json(hand):
             "addAllInThreshold": 150,
             "forceAllInThreshold": 20,
             "mergingThreshold": 10,
-            # TODO put this in the bet sizings (eg 39c). may have to estimate the ram usage as you can't load profiles for bet sizes
-            "addedLines": gen_postflop_bet_lines(hand),
+            # TODO enable this
+            # TODO note this is going to be tricky with raise sizes
+            # TODO put this in the bet sizings (eg 39c). may have to estimate the ram usage as you can't load profiles for bet sizes. 
+            "addedLines": "", # gen_postflop_bet_lines(hand),
             "removedLines": ""
         }
     } 
