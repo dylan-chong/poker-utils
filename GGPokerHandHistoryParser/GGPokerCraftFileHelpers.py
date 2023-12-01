@@ -67,19 +67,20 @@ def load_hands_from_file(file):
         for hand_string in hand_strings_stripped
     ]
 
-    lazy_hands = []
+    hands = []
     for lines in hands_lines_stripped:
         basic_hand, segments = parse_hand_basic(lines)
-        lazy_hands.append(parse_and_calculate_hand(segments, basic_hand))
+        hands.append(parse_and_calculate_hand(segments, basic_hand))
 
-    return lazy_hands
+    return hands
 
 def parse_and_calculate_hand(segments, basic_hand):
+    hand = {**basic_hand}
     try:
-        if 'postflop' not in segments:
-            raise NonAnalyzableHandException("Hand ended preflop")
-
         hand = parse_hand(segments, basic_hand)
+
+        if 'postflop' not in segments:
+            hand['error'] = "Hand ended preflop"
 
         preflop_actions_for_chart = calculate_preflop_actions_for_chart(hand)
         full_hand = {
@@ -91,6 +92,6 @@ def parse_and_calculate_hand(segments, basic_hand):
         full_hand = {**hand, **positions}
         return full_hand
     except NonAnalyzableHandException as e:
-        hand = {**basic_hand}
+        if hand and 'error' in hand: return hand
         hand['error'] = e.args[0]
         return hand

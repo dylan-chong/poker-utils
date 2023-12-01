@@ -44,4 +44,11 @@ def dollars_to_cents(dollars, should_round=True):
     return cents
 
 def matches_format(format):
-    return lambda i: bool(parse(format, i))
+    return lambda line: bool(parse(format, line))
+
+def matches_any_format(formats):
+    def matches(line):
+        for format in formats:
+            if parse(format, line): return True
+        return False
+    return matches

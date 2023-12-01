@@ -17,6 +17,7 @@ pyinstaller.exe GGPokerHandHistoryParser.py -y --add-data 'PreflopChartExtractio
 
 import traceback
 import re
+import math
 from parse import *
 
 from GGPokerHandHistoryParser.DesktopPostflopHelpers import gen_desktop_postflop_json

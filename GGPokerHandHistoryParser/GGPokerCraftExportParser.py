@@ -1,7 +1,7 @@
 from parse import *
 from datetime import datetime
 
-from GGPokerHandHistoryParser.Utils import find_index_where, matches_format
+from GGPokerHandHistoryParser.Utils import find_index_where, matches_any_format, matches_format
 
 SEAT_NUM_TO_SEAT = {
     1: 'BTN',
@@ -15,7 +15,7 @@ SEAT_NUM_TO_SEAT = {
 def split_lines_into_segments(hand_lines):
     header_i = find_index_where(matches_format('Poker Hand #{}'), hand_lines)
     preflop_i = find_index_where(matches_format('*** HOLE CARDS ***'), hand_lines)
-    flop_i = find_index_where(matches_format('*** FLOP *** [{}]'), hand_lines)
+    flop_i = find_index_where(matches_any_format(['*** FLOP *** [{}]', '*** FIRST FLOP *** [{}]']), hand_lines)
     # GGPoker calls the end of the hand showdown, not the actual reveal of cards
     showdown_i = find_index_where(matches_format('*** SHOWDOWN ***'), hand_lines)
     summary_i = find_index_where(matches_format('*** SUMMARY ***'), hand_lines)
@@ -26,6 +26,7 @@ def split_lines_into_segments(hand_lines):
     postflop = hand_lines[flop_i:summary_i] if flop_i else None
 
     segments = {
+        'all_lines': hand_lines,
         'header': hand_lines[header_i:preflop_i],
         'preflop_full': preflop_full,
         'preflop': preflop_actions,
