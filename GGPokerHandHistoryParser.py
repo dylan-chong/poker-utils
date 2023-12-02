@@ -8,6 +8,7 @@ pip3 install pyperclip
 
 # Run
 python3 GGPokerHandHistoryParser.py
+python3 GGPokerHandHistoryParser.py
 
 # To export, for another person to use
 pip3 install pyinstaller
@@ -17,8 +18,6 @@ pyinstaller.exe GGPokerHandHistoryParser.py -y --add-data 'PreflopChartExtractio
 
 import traceback
 import re
-import math
-from parse import *
 
 from GGPokerHandHistoryParser.DesktopPostflopHelpers import gen_desktop_postflop_json
 from GGPokerHandHistoryParser.GGPokerCraftFileHelpers import load_all_hands

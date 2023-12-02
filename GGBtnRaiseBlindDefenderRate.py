@@ -13,37 +13,36 @@ import math
 
 from GGPokerHandHistoryParser.GGPokerCraftFileHelpers import load_all_hands
 
+BLIND = 0.05
+OPEN_RAISE = 2.0
+
 def main():
-    hands = load_all_hands()
-    hands = [hand for hand in hands if math.isclose(hand['big_blind'], 0.05)]
-    print(f'Total hands: {len(hands)}')
-    print(f'Total player open hands: {len([hand for hand in hands if does_hand_first_action_match(hand, lambda a: a["player_id"] == "Hero")])}')
-    print(f'Total player BTN open hands: {len([hand for hand in hands if does_hand_first_action_match(hand, lambda a: a["player_id"] == "Hero" and a["seat"] == "BTN")])}')
-    print(f'Total player BTN open hands 2bb: {len([hand for hand in hands if does_hand_first_action_match(hand, lambda a: a["player_id"] == "Hero" and a["seat"] == "BTN" and math.isclose(a["to_amount"], 2 * 0.05))])}')
-    print(f'Total player BTN open hands 2.4bb: {len([hand for hand in hands if does_hand_first_action_match(hand, lambda a: a["player_id"] == "Hero" and a["seat"] == "BTN" and math.isclose(a["to_amount"], 2.4 * 0.05))])}')
-    print(f'Total player BTN open hands not 2bb and not 2.4bb: {len([hand for hand in hands if does_hand_first_action_match(hand, lambda a: a["player_id"] == "Hero" and a["seat"] == "BTN" and (not math.isclose(a["to_amount"], 2 * 0.05) and not math.isclose(a["to_amount"], 2.4 * 0.05)))])}')
+    all_hands = load_all_hands()
 
-    button_hands = [hand for hand in hands if is_hero_button_hand(hand)]
-    button_hands_no_defenders = [hand for hand in button_hands if last_action_is_button_open_raise(hand)]
+    hands_005bb = [hand for hand in all_hands if math.isclose(hand['big_blind'], BLIND)]
+    print(f'Total {BLIND} BBhands: {len(hands_005bb)}')
 
-    fold_rate = len(button_hands_no_defenders) / len(button_hands)
-    print(f'Out of {len(button_hands)} button hands, {len(button_hands_no_defenders)} immediately folded')
+    hands_player_open = [hand for hand in hands_005bb if does_hand_first_action_match(hand, lambda a: a["player_id"] == "Hero")]
+    print(f'Total player open hands: {len(hands_player_open)}')
+
+    hands_player_btn_open = [hand for hand in hands_player_open if does_hand_first_action_match(hand, lambda a: a["seat"] == "BTN")]
+    print(f'Total player BTN open hands: {len(hands_player_btn_open)}')
+
+    hands_player_btn_open_xbb = [hand for hand in hands_player_btn_open if does_hand_first_action_match(hand, lambda a: math.isclose(a["to_amount"], OPEN_RAISE * BLIND))]
+    print(f'Total player BTN open hands {OPEN_RAISE}bb: {len(hands_player_btn_open_xbb)}')
+
+    button_hands_no_defenders = [hand for hand in hands_player_btn_open if last_action_is_button_open_raise(hand)]
+    print(f'Total player BTN open hands {OPEN_RAISE}bb, no defenders: {len(button_hands_no_defenders)}')
+
+    fold_rate = len(button_hands_no_defenders) / len(hands_player_btn_open_xbb)
+    print(f'Out of {len(hands_player_btn_open_xbb)} button hands, {len(button_hands_no_defenders)} immediately folded')
     print(f'Thats a {fold_rate * 100}% fold rate')
 
 def is_button_open_raise(action):
     if action['action'] != 'raises': return False
-    if not math.isclose(action['to_amount'], 2 * 0.05): return False
+    if not math.isclose(action['to_amount'], OPEN_RAISE * BLIND): return False
     if action['player_id'] != 'Hero': return False
     if action['seat'] != 'BTN': return False
-    return True
-
-def is_hero_button_hand(hand):
-    if 'preflop' not in hand: return False
-
-    non_fold_actions = [act for act in hand['preflop']['actions'] if act['action'] != 'folds']
-    if len(non_fold_actions) == 0: return False
-    if not is_button_open_raise(non_fold_actions[0]): return False
-
     return True
 
 def does_hand_first_action_match(hand, cond):
