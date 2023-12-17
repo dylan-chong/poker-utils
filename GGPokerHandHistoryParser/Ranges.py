@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-CHART_FILE = Path('PreflopChartExtractions/PreflopCharts.json')
+CHART_FILE = Path('_internal/data/PreflopCharts.json')
 with open(CHART_FILE) as f:
     range_chart = json.load(f)
 

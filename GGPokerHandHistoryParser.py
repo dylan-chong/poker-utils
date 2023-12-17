@@ -12,7 +12,7 @@ python3 GGPokerHandHistoryParser.py
 
 # To export, for another person to use
 pip3 install pyinstaller
-pyinstaller.exe GGPokerHandHistoryParser.py -y --add-data 'PreflopChartExtractions/PreflopCharts.json;data'
+python -m PyInstaller GGPokerHandHistoryParser.py -y --add-data 'PreflopChartExtractions/PreflopCharts.json;data'
 # Then compress/send the folder inside /dist/
 """
 
