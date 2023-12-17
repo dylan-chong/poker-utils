@@ -75,9 +75,9 @@ def main_loop():
             if hand['id'] in hands_by_id: continue
             if 'error' in hand: continue
             hands_by_id[hand['id']] = hand
-        recent_hands = list(hands_by_id.values())
-        recent_hands.sort(key=lambda hand: hand['date'])
-        for hand in recent_hands: print_hand_short(hand)
+        result_hands = list(hands_by_id.values())
+        result_hands.sort(key=lambda hand: hand['date'])
+        for hand in result_hands: print_hand_short(hand)
 
     print()
     for line in format_result_count(search_term, result_hands):
