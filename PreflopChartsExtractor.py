@@ -1,10 +1,6 @@
 """
 # Deps
-pip3 install opencv-python
-pip3 install pypdf[image]
-pip3 install pytesseract
-# and install tesseract here https://github.com/tesseract-ocr/tesseract#installing-tesseract
-pip3 install parse
+In addition to the requirements.txt, install tesseract here https://github.com/tesseract-ocr/tesseract#installing-tesseract
 
 # Run
 python3 PreflopChartsExtractor.py

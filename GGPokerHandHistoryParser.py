@@ -2,16 +2,10 @@
 # Setup 
 You will have to run PreflopChartsExtractor.py to produce the charts JSON. See that file for docs
 
-# Deps
-pip3 install parse
-pip3 install pyperclip
-
 # Run
-python3 GGPokerHandHistoryParser.py
 python3 GGPokerHandHistoryParser.py
 
 # To export, for another person to use
-pip3 install pyinstaller
 python -m PyInstaller GGPokerHandHistoryParser.py -y --add-data 'PreflopChartExtractions/PreflopCharts.json;data'
 # Then compress/send the folder inside /dist/
 """
