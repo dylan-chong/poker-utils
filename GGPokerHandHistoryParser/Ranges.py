@@ -1,11 +1,25 @@
 import json
+import os.path
 from pathlib import Path
 
-CHART_FILE = Path('_internal/data/PreflopCharts.json')
-with open(CHART_FILE) as f:
-    range_chart = json.load(f)
+CHART_FILE_PATHS = [
+    '_internal/data/PreflopCharts.json',
+    'PreflopChartExtractions/PreflopCharts.json',
+]
+
+def load_range_chart():
+    for chart_path in CHART_FILE_PATHS:
+        chart_path = Path(chart_path)
+        if not os.path.isfile(chart_path):
+            continue
+        with open(chart_path) as f:
+            return json.load(f)
+
+    raise Exception('Could not find chart file')
 
 def find_chart(seat, vs_raisers):
+    range_chart = load_range_chart()
+
     exact_matches = [
         chart for chart in range_chart.values()
         if chart['seat'] == seat
@@ -64,4 +78,3 @@ def vs_raisers_match(vs_raisers_from_chart, vs_raisers, match_any):
         if from_chart == not_from_chart: continue
         return False
     return True
-    
