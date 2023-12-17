@@ -22,3 +22,9 @@ You can [view it running here](https://htmlpreview.github.io/?https://github.com
 
 - Why? The `PreflopCharts.pdf` does not have text-labelled graphs (the label is inside the image), so you cannot CTRL-F to find the right chart. Hence, I need a faster way to find the right chart. (The PDF is also not mobile friendly.)
     - And we have the charts in JSON format because of `PreflopChartsExtractor.py`, so why not use them?
+
+# Development
+
+```bash
+pip install -r requirements.txt
+```
