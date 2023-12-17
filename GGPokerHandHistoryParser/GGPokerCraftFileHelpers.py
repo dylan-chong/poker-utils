@@ -20,8 +20,10 @@ def load_all_hands():
     files = glob.glob(file_glob)
     files.sort()
 
-    with multiprocessing.Pool() as pool:
-        hands_pages = pool.map(load_hands_from_file, files)
+    # TODO this is broken on windows 11
+    # with multiprocessing.Pool(1) as pool:
+        # hands_pages = pool.map(load_hands_from_file, files)
+    hands_pages = list(map(load_hands_from_file, files))
 
     return list(chain.from_iterable(hands_pages))
 
