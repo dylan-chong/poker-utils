@@ -21,7 +21,7 @@ def print_hand_error(hand):
     print_hand_title(hand)
     print(f'  {hand["error"]}')
 
-def print_hand(hand, wait_and_copy_json=False):
+def print_hand(hand, wait_and_copy_json=None):
     print()
     print_hand_title(hand)
     print_position('oop', hand)
