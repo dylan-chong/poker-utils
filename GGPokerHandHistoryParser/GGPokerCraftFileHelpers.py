@@ -4,6 +4,7 @@ import re
 import os
 import zipfile
 import tempfile
+import shutil
 from itertools import chain
 import multiprocessing
 
@@ -13,12 +14,17 @@ from GGPokerHandHistoryParser.Calculations import calculate_positions_for_hand, 
 
 UUID_REGEX = r'^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$'
 
-def load_all_hands():
-    files_dir = extract_downloads()
+GG_FILE_GLOB = "GG*.txt"
 
-    file_glob = str(Path(files_dir, Path("GG20*.txt")))
-    files = glob.glob(file_glob)
+def load_all_hands():
+    temp_dir = tempfile.TemporaryDirectory().name
+    extract_downloads(temp_dir)
+    copy_downloads_non_zipped(temp_dir)
+
+    file_glob = str(Path(temp_dir, Path('**/' + GG_FILE_GLOB)))
+    files = glob.glob(file_glob, recursive=True)
     files.sort()
+    print(f'Loading {len(files)} files')
 
     # TODO this is broken on windows 11
     # with multiprocessing.Pool(1) as pool:
@@ -27,7 +33,7 @@ def load_all_hands():
 
     return list(chain.from_iterable(hands_pages))
 
-def extract_downloads():
+def extract_downloads(temp_dir):
     file_paths = os.listdir(DOWNLOADS_DIR)
 
     pattern = UUID_REGEX.replace('$', '.zip$')
@@ -38,20 +44,17 @@ def extract_downloads():
     ]
     zip_paths.sort(key=lambda path: os.path.getmtime(path))
 
-    temp_dir = tempfile.TemporaryDirectory().name
-
-    extracted_files = []
     for path in zip_paths:
         with zipfile.ZipFile(path, 'r') as zip:
-            files = [
-                file for file in zip.namelist()
-                if re.match(r'^GG20.*\.txt$', file)
-            ]
-            extracted_files.extend(files)
-            zip.extractall(temp_dir, files)
+            zip.extractall(temp_dir)
     
-    print(f'{len(extracted_files)} files extracted from {len(zip_paths)} zips')
     return temp_dir
+
+def copy_downloads_non_zipped(to_dir):
+    file_glob = str(Path(DOWNLOADS_DIR, Path('**/' + GG_FILE_GLOB)))
+    files = glob.glob(file_glob, recursive=True)
+    for file in files:
+        shutil.copy(file, to_dir)
 
 def load_hands_from_file(file):
     with open(file, "r") as f:
