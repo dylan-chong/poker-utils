@@ -144,11 +144,7 @@ def print_round_aggressor(round_key, hand):
     print(f'    {postflop_seat.upper()}')
 
 def format_result_count(search_term, matches):
-    match_cards = [
-        format_cards(hand['players']['Hero']['hole_cards'])
-        for hand in matches
-        if 'error' not in hand
-    ]
+    match_cards = [hand for hand in matches if 'error' not in hand]
 
     non_analysable = [hand for hand in matches if 'error' in hand]
     non_analysable_suffix = '' if len(non_analysable) == 0 else f', {len(non_analysable)} not'
@@ -156,9 +152,7 @@ def format_result_count(search_term, matches):
     count_label = 'recent analysable' if search_term == 'r' else 'analysable'
     counts = f'{len(match_cards)} {count_label}{non_analysable_suffix}'
 
-    if len(match_cards) == 0: matches_joined = ''
-    else: matches_joined = ' - ' + ', '.join(match_cards)
-    return [f'{search_term} - {counts}{matches_joined}']
+    return [f'{search_term} - {counts}']
 
 def format_cards(cards, with_border=True, sort=True):
     cards = list(cards)
