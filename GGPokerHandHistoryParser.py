@@ -10,6 +10,7 @@ python -m PyInstaller GGPokerHandHistoryParser.py -y --add-data 'PreflopChartExt
 # Then compress/send the folder inside /dist/
 """
 
+import multiprocessing
 import traceback
 import re
 
@@ -108,4 +109,5 @@ def reformat_search_term(search_term):
     raise InvalidSearchException(f'Unknown command `{search_term}`')
 
 if __name__ == '__main__':
+    multiprocessing.freeze_support()
     main()
