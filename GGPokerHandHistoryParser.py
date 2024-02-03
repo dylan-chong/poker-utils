@@ -20,6 +20,8 @@ from GGPokerHandHistoryParser.PrintHelpers import print_main_loop_instructions, 
 from GGPokerHandHistoryParser.Utils import InvalidSearchException, DOWNLOADS_DIR
 from GGPokerHandHistoryParser.History import save_to_history_file, last_search_term, print_history
 
+N_RECENT_HANDS = 10
+
 def main():
     print(f'Download your GG PokerCraft hand history zips into your `{DOWNLOADS_DIR}` directory')
 
@@ -68,11 +70,13 @@ def main_loop():
                 continue
             print_hand(hand)
             result_hands.append(hand)
+        for line in format_result_count(search_term, result_hands):
+            print(line)
     
     if search_term == 'r':
         hands_by_id = {}
         for hand in reversed(hands):
-            if len(hands_by_id) == 50: break
+            if len(hands_by_id) == N_RECENT_HANDS: break
             if hand['id'] in hands_by_id: continue
             if 'error' in hand: continue
             hands_by_id[hand['id']] = hand
@@ -80,9 +84,9 @@ def main_loop():
         result_hands.sort(key=lambda hand: hand['date'])
         for hand in result_hands: print_hand_short(hand)
 
-    print()
-    for line in format_result_count(search_term, result_hands):
-        print(line)
+        print()
+        print(f'r - {len(result_hands)} analysable')
+
     return search_term, result_hands
 
 def reformat_search_term(search_term):
