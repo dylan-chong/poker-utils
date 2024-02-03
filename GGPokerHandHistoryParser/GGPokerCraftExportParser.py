@@ -168,7 +168,7 @@ def parse_board(segments):
         a, b, c = parse('*** FLOP *** [{} {} {}]', segments['flop'][0])
         return [a, b, c]
     
-    return None
+    return []
 
 def parse_postflop(segments, hand):
     new_hand_fields = {}
