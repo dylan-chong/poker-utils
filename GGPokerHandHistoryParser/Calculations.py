@@ -1,4 +1,4 @@
-from GGPokerHandHistoryParser.Utils import NonAnalyzableHandException, POSTFLOP_SEAT_ORDER, find_index_where, get_postflop_seat, format_action_description
+from GGPokerHandHistoryParser.Utils import NonAnalyzableHandException, POSTFLOP_SEAT_ORDER, find_index_where, get_postflop_seat, format_action_description, STREETS
 from GGPokerHandHistoryParser.Ranges import find_chart, get_range_from_chart
 
 def calculate_effective_stack_size_on_flop(hand):
@@ -118,3 +118,22 @@ def get_round_aggressor(round_key, hand):
     postflop_seat = get_postflop_seat(actions[last_aggressor_i]['player_id'], hand)
     if postflop_seat is None: return None
     return postflop_seat
+
+def calculate_losses(hand):
+    for street in reversed(STREETS):
+        if street not in hand: continue
+
+        end_stacks = hand[street]['new_stacks'] # before collecting win
+        players = hand['players']
+        
+        for player_id, player in players.items():
+            loss = player['initial_stack'] - end_stacks[player_id] 
+            player['loss'] = loss
+
+        return
+
+def calculate_winlosses(hand):
+    for player in hand['players'].values():
+        win = player.get('win_post_rake', 0)
+        loss = player.get('loss', 0)
+        player['win_loss_post_rake'] = win - loss

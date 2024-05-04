@@ -9,7 +9,7 @@ import multiprocessing
 
 from GGPokerHandHistoryParser.GGPokerCraftExportParser import parse_hand_basic, parse_hand
 from GGPokerHandHistoryParser.Utils import DOWNLOADS_DIR, NonAnalyzableHandException
-from GGPokerHandHistoryParser.Calculations import calculate_positions_for_hand, calculate_preflop_actions_for_chart
+from GGPokerHandHistoryParser.Calculations import calculate_positions_for_hand, calculate_preflop_actions_for_chart, calculate_losses, calculate_winlosses
 
 UUID_REGEX = r'^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$'
 
@@ -87,21 +87,24 @@ def load_hands_from_file(file):
 
 def parse_and_calculate_hand(segments, basic_hand):
     hand = {**basic_hand}
+    hand = parse_hand(segments, basic_hand)
+
+    calculate_losses(hand)
+    calculate_winlosses(hand)
+
+    if 'postflop' not in segments:
+        hand['error'] = "Hand ended preflop"
+
     try:
-        hand = parse_hand(segments, basic_hand)
-
-        if 'postflop' not in segments:
-            hand['error'] = "Hand ended preflop"
-
         preflop_actions_for_chart = calculate_preflop_actions_for_chart(hand)
-        full_hand = {
+        hand = {
             **hand,
             'preflop': { **hand['preflop'], **preflop_actions_for_chart }
         }
 
-        positions = calculate_positions_for_hand(full_hand)
-        full_hand = {**hand, **positions}
-        return full_hand
+        positions = calculate_positions_for_hand(hand)
+        hand = {**hand, **positions}
+        return hand
     except NonAnalyzableHandException as e:
         if hand and 'error' in hand: return hand
         hand['error'] = e.args[0]

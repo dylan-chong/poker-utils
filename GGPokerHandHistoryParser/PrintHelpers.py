@@ -29,7 +29,7 @@ def print_hand(hand, wait_and_copy_json=None):
     print(f'  Board')
     print(f'    {format_cards(hand.get("board", []), sort=False)}')
     print(f'  Starting Pot')
-    print(f'    ${hand["preflop"]["pot"]:.2f}')
+    print(f'    ${hand["preflop"]["new_pot"]:.2f}')
     print(f'  Effective Stack')
     print(f'    ${calculate_effective_stack_size_on_flop(hand):.2f}')
     print_actions('preflop', hand, include_folds=False, include_aggressor=True)
@@ -127,10 +127,9 @@ def print_actions(round_key, hand, include_folds=True, include_aggressor=False, 
         player_display = format_player_name(action['player_id'], hand)
 
         if action['action'] == 'raises':
-            _, raise_to = parse('${} to ${}', action['tail'])
-            tail = f'to ${raise_to}'
+            tail = f'to ${action["to_amount"]}'
         else:
-            tail = action['tail']
+            tail = action['amount']
 
         print(f'    {player_display} {action["action"]} {tail}')
     
@@ -175,6 +174,7 @@ def card_id_from_str(card_str):
     suit = SUIT_LETTERS.index(match[2].lower())
     return card_id(rank, suit)
 
+# TODO not used
 def format_position_stacks(position_key, hand):
     player_id = hand[position_key]["player_id"]
     initial_stack = hand["players"][player_id]["initial_stack"]

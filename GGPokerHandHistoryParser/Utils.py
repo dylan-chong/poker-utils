@@ -5,6 +5,7 @@ import re
 POSTFLOP_SEAT_ORDER = ['SB', 'BB', 'LJ', 'HJ', 'CO', 'BTN']
 RANKS = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"]
 SUIT_LETTERS = ["c", "d", "h", "s"]
+STREETS = ['preflop', 'flop', 'turn', 'river']
 
 DOWNLOADS_DIR = Path(Path.home(), Path('Downloads'))
 
