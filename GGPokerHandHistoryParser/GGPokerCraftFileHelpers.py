@@ -5,7 +5,7 @@ import os
 import zipfile
 import tempfile
 import shutil
-from itertools import chain
+from collections import ChainMap
 import multiprocessing
 
 from GGPokerHandHistoryParser.GGPokerCraftExportParser import parse_hand_basic, parse_hand
@@ -16,7 +16,7 @@ UUID_REGEX = r'^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4
 
 GG_FILE_GLOB = "GG*.txt"
 
-def load_all_hands():
+def load_all_hands(hand_cache):
     temp_dir = tempfile.TemporaryDirectory().name
     extract_downloads(temp_dir)
     copy_downloads_non_zipped(temp_dir)
@@ -24,12 +24,19 @@ def load_all_hands():
     file_glob = str(Path(temp_dir, Path('**/' + GG_FILE_GLOB)))
     files = glob.glob(file_glob, recursive=True)
     files.sort()
-    print(f'Loading {len(files)} files')
+
+    unloaded_files = [file for file in files if os.path.basename(file) not in hand_cache]
+    print(f'Loading {len(unloaded_files)} files matching {GG_FILE_GLOB}')
 
     with multiprocessing.Pool() as pool:
-        hands_pages = pool.map(load_hands_from_file, files)
+        hands_files = pool.map(load_hands_from_file, unloaded_files)
 
-    return list(chain.from_iterable(hands_pages))
+    hands_per_file = {**hand_cache}
+    for hands, file in hands_files:
+        hands_per_file[os.path.basename(file)] = hands
+
+    return hands_per_file
+
 
 def extract_downloads(temp_dir):
     file_paths = os.listdir(DOWNLOADS_DIR)
@@ -75,7 +82,7 @@ def load_hands_from_file(file):
         basic_hand, segments = parse_hand_basic(lines)
         hands.append(parse_and_calculate_hand(segments, basic_hand))
 
-    return hands
+    return hands, file
 
 def parse_and_calculate_hand(segments, basic_hand):
     hand = {**basic_hand}

@@ -13,6 +13,7 @@ python -m PyInstaller GGPokerHandHistoryParser.py -y --add-data 'PreflopChartExt
 import multiprocessing
 import traceback
 import re
+from itertools import chain
 
 from GGPokerHandHistoryParser.DesktopPostflopHelpers import gen_desktop_postflop_json
 from GGPokerHandHistoryParser.GGPokerCraftFileHelpers import load_all_hands
@@ -24,11 +25,14 @@ N_RECENT_HANDS = 10
 
 def main():
     print(f'Download your GG PokerCraft hand history zips into your `{DOWNLOADS_DIR}` directory')
+    hand_cache = load_all_hands({})
 
     while True:
         try:
             print()
-            save_to_history_file(*main_loop())
+            search_term, result_hand, new_hand_cache = main_loop(hand_cache)
+            hand_cache = new_hand_cache
+            save_to_history_file(search_term, result_hand)
         except InvalidSearchException as e:
             print(e)
         except Exception as e:
@@ -37,7 +41,7 @@ def main():
             traceback.print_exc()
             print('-----------------------------------')
 
-def main_loop():
+def main_loop(hand_cache):
     print_main_loop_instructions()
     search_term = input('>>> ').strip()
     print()
@@ -45,13 +49,18 @@ def main_loop():
 
     if search_term == 'h':
         print_history()
-        return search_term, []
+        return search_term, [], hand_cache
     if search_term.startswith('c '):
         print_call_and_raise_range(search_term)
-        return search_term, []
+        return search_term, [], hand_cache
 
-    hands = load_all_hands()
-    hands.sort(key=lambda hand: hand['date'])
+    hands_per_file = load_all_hands(hand_cache)
+    hands = list(
+        sorted(
+            chain(*hands_per_file.values()),
+            key=lambda hand: hand['date']
+        )
+    )
     result_hands = []
     
     if search_term.startswith('#'):
@@ -87,7 +96,7 @@ def main_loop():
         print()
         print(f'r - {len(result_hands)} analysable')
 
-    return search_term, result_hands
+    return search_term, result_hands, hands_per_file
 
 def reformat_search_term(search_term):
     if search_term in ['h', 'e', 'a', 'r']: return search_term
