@@ -17,11 +17,11 @@ GG_FILE_GLOB = 'GG*.txt'
 GG_APPROX_ZIP_FILE_GLOB = '*.zip'
 
 def load_all_hands(hand_cache):
-    temp_dir = tempfile.TemporaryDirectory().name
+    temp_dir = tempfile.mkdtemp()
     extract_downloads(temp_dir)
     copy_downloads_non_zipped(temp_dir)
 
-    file_glob = str(Path(temp_dir, Path('**/'), Path(GG_FILE_GLOB)))
+    file_glob = str(Path(temp_dir, Path('**'), Path(GG_FILE_GLOB)))
     files = glob.glob(file_glob, recursive=True)
     files.sort()
 
@@ -57,10 +57,10 @@ def extract_downloads(temp_dir):
     return temp_dir
 
 def copy_downloads_non_zipped(to_dir):
-    file_glob = str(Path(DOWNLOADS_DIR, Path('**/' + GG_FILE_GLOB)))
+    file_glob = str(Path(DOWNLOADS_DIR, Path('**'), Path(GG_FILE_GLOB)))
     files = glob.glob(file_glob, recursive=True)
     for file in files:
-        shutil.copy(file, to_dir)
+        shutil.copy(file, Path(Path(to_dir), Path(os.path.basename(file))))
 
 def load_hands_from_file(file):
     with open(file, "r") as f:
