@@ -1,5 +1,6 @@
 from pathlib import Path
 from parse import *
+import re
 
 POSTFLOP_SEAT_ORDER = ['SB', 'BB', 'LJ', 'HJ', 'CO', 'BTN']
 RANKS = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"]
@@ -43,8 +44,14 @@ def dollars_to_cents(dollars, should_round=True):
     if should_round: return int(round(cents))
     return cents
 
+"""
+Seems slow. use matches_regex_instead
+"""
 def matches_format(format):
     return lambda line: bool(parse(format, line))
+
+def matches_regex(pattern):
+    return lambda line: re.match(pattern, line)
 
 def matches_any_format(formats):
     def matches(line):

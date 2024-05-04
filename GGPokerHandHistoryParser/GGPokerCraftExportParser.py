@@ -1,7 +1,7 @@
 from parse import *
 from datetime import datetime
 
-from GGPokerHandHistoryParser.Utils import find_index_where, matches_any_format, matches_format
+from GGPokerHandHistoryParser.Utils import find_index_where, matches_regex
 
 SEAT_NUM_TO_SEAT = {
     1: 'BTN',
@@ -13,12 +13,12 @@ SEAT_NUM_TO_SEAT = {
 }
 
 def split_lines_into_segments(hand_lines):
-    header_i = find_index_where(matches_format('Poker Hand #{}'), hand_lines)
-    preflop_i = find_index_where(matches_format('*** HOLE CARDS ***'), hand_lines)
-    flop_i = find_index_where(matches_any_format(['*** FLOP *** [{}]', '*** FIRST FLOP *** [{}]']), hand_lines)
+    header_i = find_index_where(matches_regex(r'Poker Hand .*'), hand_lines)
+    preflop_i = find_index_where(matches_regex(r'\*\*\* HOLE CARDS .*'), hand_lines)
+    flop_i = find_index_where(matches_regex(r'\*\*\* (FLOP|FIRST FLOP) .*'), hand_lines)
     # GGPoker calls the end of the hand showdown, not the actual reveal of cards
-    showdown_i = find_index_where(matches_format('*** SHOWDOWN ***'), hand_lines)
-    summary_i = find_index_where(matches_format('*** SUMMARY ***'), hand_lines)
+    showdown_i = find_index_where(matches_regex(r'\*\*\* SHOWDOWN .*'), hand_lines)
+    summary_i = find_index_where(matches_regex(r'\*\*\* SUMMARY .*'), hand_lines)
 
     preflop_full = hand_lines[preflop_i:(flop_i or showdown_i)]
     preflop_actions =  [line for line in preflop_full if not line.startswith('Dealt to')]
@@ -38,12 +38,14 @@ def split_lines_into_segments(hand_lines):
         return segments
 
     segments['postflop'] = postflop
-    return { **segments, **split_postflop_lines(postflop)}
+    res = { **segments, **split_postflop_lines(postflop)}
+
+    return res
 
 def split_postflop_lines(lines):
-    flop_i = find_index_where(matches_format('*** FLOP *** [{}]'), lines)
-    turn_i = find_index_where(matches_format('*** TURN *** [{}] [{}]'), lines)
-    river_i = find_index_where(matches_format('*** RIVER *** [{}] [{}]'), lines)
+    flop_i = find_index_where(matches_regex(r'\*\*\* FLOP \*\*\*.*'), lines)
+    turn_i = find_index_where(matches_regex(r'\*\*\* TURN \*\*\*.*'), lines)
+    river_i = find_index_where(matches_regex(r'\*\*\* RIVER \*\*\*.*'), lines)
     
     sections = {}
     
@@ -221,7 +223,7 @@ def parse_action(line, hand):
 
 def parse_hero_cards(segments):
     lines = segments.get('preflop_full', [])
-    line_i = find_index_where(matches_format('Dealt to Hero {}'), lines)
+    line_i = find_index_where(matches_regex('Dealt to Hero.*'), lines)
     cards = parse('Dealt to Hero [{}]', lines[line_i])
     return cards[0].split(' ')
 
