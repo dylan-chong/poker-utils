@@ -5,7 +5,6 @@ import os
 import zipfile
 import tempfile
 import shutil
-from collections import ChainMap
 import multiprocessing
 
 from GGPokerHandHistoryParser.GGPokerCraftExportParser import parse_hand_basic, parse_hand
@@ -14,14 +13,15 @@ from GGPokerHandHistoryParser.Calculations import calculate_positions_for_hand, 
 
 UUID_REGEX = r'^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$'
 
-GG_FILE_GLOB = "GG*.txt"
+GG_FILE_GLOB = 'GG*.txt'
+GG_APPROX_ZIP_FILE_GLOB = '*.zip'
 
 def load_all_hands(hand_cache):
     temp_dir = tempfile.TemporaryDirectory().name
     extract_downloads(temp_dir)
     copy_downloads_non_zipped(temp_dir)
 
-    file_glob = str(Path(temp_dir, Path('**/' + GG_FILE_GLOB)))
+    file_glob = str(Path(temp_dir, Path('**/'), Path(GG_FILE_GLOB)))
     files = glob.glob(file_glob, recursive=True)
     files.sort()
 
@@ -39,18 +39,19 @@ def load_all_hands(hand_cache):
 
 
 def extract_downloads(temp_dir):
-    file_paths = os.listdir(DOWNLOADS_DIR)
+    zip_file_glob = str(Path(DOWNLOADS_DIR, Path('**/'), Path(GG_APPROX_ZIP_FILE_GLOB)))
+    all_zip_files = glob.glob(zip_file_glob, recursive=True)
 
-    pattern = UUID_REGEX.replace('$', '.zip$')
-    zip_paths = [
-        Path(Path(DOWNLOADS_DIR), Path(path))
-        for path in file_paths
-        if re.match(pattern, path)
+    pattern = UUID_REGEX.replace('$', r'.*\.zip$').replace('^', '.*')
+    zip_files = [
+        Path(Path(DOWNLOADS_DIR), Path(file))
+        for file in all_zip_files
+        if re.match(pattern, file)
     ]
-    zip_paths.sort(key=lambda path: os.path.getmtime(path))
+    zip_files.sort(key=lambda file: os.path.getmtime(file))
 
-    for path in zip_paths:
-        with zipfile.ZipFile(path, 'r') as zip:
+    for file in zip_files:
+        with zipfile.ZipFile(file, 'r') as zip:
             zip.extractall(temp_dir)
     
     return temp_dir
