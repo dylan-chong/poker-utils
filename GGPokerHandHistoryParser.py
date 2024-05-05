@@ -11,6 +11,7 @@ python -m PyInstaller GGPokerHandHistoryParser.py -y --add-data 'PreflopChartExt
 """
 
 import multiprocessing
+from pathlib import Path
 import traceback
 import re
 from itertools import chain
@@ -96,10 +97,39 @@ def main_loop(hand_cache):
         print()
         print(f'r - {len(result_hands)} analysable')
 
+    export_term = re.match(r'e\s+\$?([\d.]+)', search_term)
+    if export_term:
+        if len(hands) == 0:
+            print('No hands to analyse')
+        else:
+            export_path = Path(Path(DOWNLOADS_DIR), Path('hands_bankroll.csv'))
+            with open(export_path, 'w') as export:
+                export.write('hand_id,hand_no,date_utc,big_blind,win_loss_post_rake,win_post_rake,loss,rake_paid,unadvertised_rake,bankroll\n')
+                bankroll = float(export_term.group(1))
+                # Assume sorted hands
+                for i, hand in enumerate(hands):
+                    win_loss = hand['players']['Hero']['win_loss_post_rake']
+                    bankroll = bankroll + win_loss
+                    export.write(','.join([
+                        hand['id'],
+                        str(i + 1),
+                        str(hand['date']),
+                        str(hand['big_blind']),
+                        str(win_loss),
+                        str(hand['players']['Hero']['win_post_rake']),
+                        str(hand['players']['Hero']['loss']),
+                        str(hand['rake'] if win_loss > 0 else 0),
+                        str(hand['unadvertised_rake'] if win_loss > 0 else 0),
+                        str(bankroll)
+                    ]))
+                    export.write('\n')
+
+            print(f'Data exported to {export_path}')
+
     return search_term, result_hands, hands_per_file
 
 def reformat_search_term(search_term):
-    if search_term in ['h', 'e', 'a', 'r']: return search_term
+    if search_term in ['h', 'a', 'r']: return search_term
 
     if search_term.startswith('RC'):
         search_term = '#' + search_term
@@ -117,6 +147,8 @@ def reformat_search_term(search_term):
         return reformat_search_term(last_term.strip())
 
     if search_term.startswith('c '):
+        return search_term
+    if search_term.startswith('e '):
         return search_term
 
     raise InvalidSearchException(f'Unknown command `{search_term}`')

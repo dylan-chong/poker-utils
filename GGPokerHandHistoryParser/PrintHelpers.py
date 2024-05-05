@@ -8,11 +8,12 @@ from GGPokerHandHistoryParser.Utils import InvalidSearchException, POSTFLOP_SEAT
 def print_main_loop_instructions():
     print(f'Enter command, e.g.: ')
     print(f'- r - show recent analysable hands (where the hero reaches the flop, without limp or check)')
-    print(f'- #RC1800277957 - show hand with the given hand ID (requires extraction) ')
+    print(f'- #RC1800277957 - show hand with the given hand ID (requires extraction)')
     print(f'- l - repeat the last search')
     print(f'- h - show search history')
     print(f'- c - `c btn co lj` to print heads up ranges for BTN call, vs CO 3Bet vs LJ RFI')
     print(f'- a - show all hands')
+    print(f'- e 42.69 - export bankroll history graph as a CSV, with the bankroll starting at $42.69')
 
 def print_hand_title(hand):
     print(f'{hand["id"]} - {hand["date"]}')
