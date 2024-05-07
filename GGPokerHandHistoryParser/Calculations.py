@@ -136,4 +136,4 @@ def calculate_winlosses(hand):
     for player in hand['players'].values():
         win = player.get('win_post_rake_fees', 0)
         loss = player.get('loss', 0)
-        player['wih_loss_post_rake_fees'] = win - loss
+        player['win_loss_post_rake_fees'] = win - loss
