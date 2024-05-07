@@ -149,11 +149,11 @@ def parse_winners(basic_hand, segments):
         winner, amount_str = match.group(1, 2)
 
         for player_id, player in basic_hand['players'].items():
-            prev_win = player.get('win_post_rake', 0)
+            prev_win = player.get('win_post_rake_fees', 0)
             if winner == player_id:
-                player['win_post_rake'] = float(amount_str) + prev_win
+                player['win_post_rake_fees'] = float(amount_str) + prev_win
             else:
-                player['win_post_rake'] = prev_win
+                player['win_post_rake_fees'] = prev_win
 
 def parse_bets_and_new_stacks(hand, street_actions, previous_player_stacks, previous_pot, post_blinds=False, segments={}):
     # bets the player makes (raising to the latest amount in the list)
