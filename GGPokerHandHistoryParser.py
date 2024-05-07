@@ -104,7 +104,7 @@ def main_loop(hand_cache):
         else:
             export_path = Path(Path(DOWNLOADS_DIR), Path('hands_bankroll.csv'))
             with open(export_path, 'w') as export:
-                export.write('hand_id,hand_no,date_utc,big_blind,win_loss_post_rake,win_post_rake,loss,rake_paid,unadvertised_rake,bankroll\n')
+                export.write('hand_id,hand_no,date_utc,big_blind,win_loss_post_rake,win_post_rake,loss,rake_paid,jackpot_fees,bankroll\n')
                 bankroll = float(export_term.group(1))
                 # Assume sorted hands
                 for i, hand in enumerate(hands):
@@ -119,7 +119,7 @@ def main_loop(hand_cache):
                         str(hand['players']['Hero']['win_post_rake']),
                         str(hand['players']['Hero']['loss']),
                         str(hand['rake'] if win_loss > 0 else 0),
-                        str(hand['unadvertised_rake'] if win_loss > 0 else 0),
+                        str(hand['jackpot_fees'] if win_loss > 0 else 0),
                         str(bankroll)
                     ]))
                     export.write('\n')

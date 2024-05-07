@@ -137,7 +137,7 @@ def parse_summary(basic_hand, segments):
         basic_hand['pot'] = float(pot_str)
         # I have no idea WTF this jackpot is but it seems to be taken from the winners
         basic_hand['rake'] = float(rake_str) + float(jackpot_str)
-        basic_hand['unadvertised_rake'] = float(jackpot_str)
+        basic_hand['jackpot_fees'] = float(jackpot_str)
         return
 
     raise Exception(f"Did not find summary in expected format in {segments['summary']}")
