@@ -135,8 +135,8 @@ def parse_summary(basic_hand, segments):
         pot_str, rake_str, jackpot_str = summary.group(1, 2, 3)
 
         basic_hand['pot'] = float(pot_str)
-        # I have no idea WTF this jackpot is but it seems to be taken from the winners
-        basic_hand['rake'] = float(rake_str) + float(jackpot_str)
+        basic_hand['rake'] = float(rake_str)
+        # Fees for bad beat jackpot
         basic_hand['jackpot_fees'] = float(jackpot_str)
         return
 
