@@ -130,7 +130,7 @@ def print_actions(round_key, hand, include_folds=True, include_aggressor=False, 
         if action['action'] == 'raises':
             tail = f'to ${action["to_amount"]}'
         else:
-            tail = action['amount']
+            tail = action.get('amount', '')
 
         print(f'    {player_display} {action["action"]} {tail}')
     
