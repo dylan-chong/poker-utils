@@ -1,14 +1,16 @@
 from GGPokerHandHistoryParser.Utils import POSTFLOP_SEAT_ORDER
 
-def export_hands_to_csv(filename, hands, initial_bankroll = 0):
-    bankroll = initial_bankroll
+def export_hands_to_csv(filename, hands):
+    bankroll = 0.0
+    bankroll_bb_per_100_h = 0.0
 
     with open(filename, 'w') as export:
         for i, hand in enumerate(hands):
             win_loss = hand['players']['Hero']['win_loss_post_rake_fees']
             bankroll = bankroll + win_loss
+            bankroll_bb_per_100_h = bankroll_bb_per_100_h + (win_loss / hand['big_blind'] / len(hands) * 100.0)
 
-            tuples = hand_to_tuples(hand, i, bankroll)
+            tuples = hand_to_tuples(hand, i, bankroll, bankroll_bb_per_100_h)
 
             if i == 0:
                 for key, _ in tuples:
@@ -20,7 +22,7 @@ def export_hands_to_csv(filename, hands, initial_bankroll = 0):
                 export.write(',')
             export.write('\n')
             
-def hand_to_tuples(hand, hand_i, bankroll):
+def hand_to_tuples(hand, hand_i, bankroll, bankroll_bb_per_100_h):
     win_loss = hand['players']['Hero']['win_loss_post_rake_fees']
     rake = hand['rake'] if win_loss > 0 else 0
     fees = hand['jackpot_fees'] if win_loss > 0 else 0
@@ -53,6 +55,8 @@ def hand_to_tuples(hand, hand_i, bankroll):
         ('loss',                     str(hand['players']['Hero']['loss'])),
         ('rake_paid',                str(rake)),
         ('jackpot_fees',             str(fees)),
+        ('relative_bankroll',        str(bankroll)),
+        ('rel_bank_bb_per_100_ha',   str(bankroll_bb_per_100_h)),
         ('hero_is_postflop',         str(hero_is_postflop)),
         ('preflop_n_bet',            str(len(preflop_raises))),
         ('preflop_is_raiser',        str(is_raiser)),

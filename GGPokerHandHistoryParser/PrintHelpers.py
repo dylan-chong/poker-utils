@@ -13,7 +13,7 @@ def print_main_loop_instructions():
     print(f'- h - show search history')
     print(f'- c - `c btn co lj` to print heads up ranges for BTN call, vs CO 3Bet vs LJ RFI')
     print(f'- a - show all hands')
-    print(f'- e 42.69 - export bankroll history graph as a CSV, with optional bankroll starting at $42.69')
+    print(f'- e - export hand history as a CSV')
 
 def print_hand_title(hand):
     print(f'{hand["id"]} - {hand["date"]}')
