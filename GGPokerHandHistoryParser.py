@@ -98,14 +98,12 @@ def main_loop(hand_cache):
         print()
         print(f'r - {len(result_hands)} analysable')
 
-    export_term = re.match(r'e(\s*\$?([\d.]*))', search_term)
-    if export_term:
+    if search_term == 'e':
         if len(hands) == 0:
             print('No hands to analyse')
         else:
-            export_path = Path(Path(DOWNLOADS_DIR), Path('hands_bankroll.csv'))
-            initial_bankroll = float(export_term.group(2) or 0)
-            export_hands_to_csv(export_path, hands, initial_bankroll)
+            export_path = Path(Path(DOWNLOADS_DIR), Path('hands.csv'))
+            export_hands_to_csv(export_path, hands)
 
             print(f'Data exported to {export_path}')
 
@@ -131,7 +129,7 @@ def reformat_search_term(search_term):
 
     if search_term.startswith('c '):
         return search_term
-    if search_term == 'e' or search_term.startswith('e '):
+    if search_term == 'e':
         return search_term
 
     raise InvalidSearchException(f'Unknown command `{search_term}`')

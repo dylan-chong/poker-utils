@@ -1,3 +1,5 @@
+from GGPokerHandHistoryParser.Utils import POSTFLOP_SEAT_ORDER
+
 def export_hands_to_csv(filename, hands, initial_bankroll = 0):
     bankroll = initial_bankroll
 
@@ -45,12 +47,12 @@ def hand_to_tuples(hand, hand_i, bankroll):
         ('date_utc',                 str(hand['date'])),
         ('big_blind',                str(hand['big_blind'])),
         ('seat',                     hand['players']['Hero']['seat']),
+        ('seat_index',               str(POSTFLOP_SEAT_ORDER.index(hand['players']['Hero']['seat']))),
         ('win_loss_post_rake_fees',  str(win_loss)),
         ('win_post_rake_fees',       str(hand['players']['Hero']['win_post_rake_fees'])),
         ('loss',                     str(hand['players']['Hero']['loss'])),
         ('rake_paid',                str(rake)),
         ('jackpot_fees',             str(fees)),
-        ('bankroll',                 str(bankroll)),
         ('hero_is_postflop',         str(hero_is_postflop)),
         ('preflop_n_bet',            str(len(preflop_raises))),
         ('preflop_is_raiser',        str(is_raiser)),
