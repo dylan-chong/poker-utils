@@ -4,22 +4,25 @@ def export_hands_to_csv(filename, hands):
     bankroll = 0.0
 
     with open(filename, 'w') as export:
-        for i, hand in enumerate(hands):
+        for hand_i, hand in enumerate(hands):
             win_loss = hand['players']['Hero']['win_loss_post_rake_fees']
             bankroll = bankroll + win_loss
 
-            tuples = hand_to_tuples(hand, i, bankroll)
+            tuples = hand_to_tuples(hand, hand_i, bankroll)
 
-            if i == 0:
-                for key, _ in tuples:
-                    export.write(key)
-                    export.write(',')
+            if hand_i == 0:
+                write_csv_row(export, list(key for key, _ in tuples))
 
-            for _, value in tuples:
-                export.write(value)
-                export.write(',')
-            export.write('\n')
+            write_csv_row(export, list(value for _, value in tuples))
             
+def write_csv_row(file, values):
+    for col_i, value in enumerate(values):
+        file.write(value)
+        if col_i < len(values) - 1:
+            file.write(',')
+    file.write('\n')
+
+
 def hand_to_tuples(hand, hand_i, bankroll):
     win_loss = hand['players']['Hero']['win_loss_post_rake_fees']
     rake = hand['rake'] if win_loss > 0 else 0
