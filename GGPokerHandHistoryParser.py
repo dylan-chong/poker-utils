@@ -21,6 +21,7 @@ from GGPokerHandHistoryParser.GGPokerCraftFileHelpers import load_all_hands
 from GGPokerHandHistoryParser.PrintHelpers import print_main_loop_instructions, print_main_loop_instructions, print_hand_error, print_hand, print_hand_short, print_call_and_raise_range, format_result_count
 from GGPokerHandHistoryParser.Utils import InvalidSearchException, DOWNLOADS_DIR
 from GGPokerHandHistoryParser.History import save_to_history_file, last_search_term, print_history
+from GGPokerHandHistoryParser.CsvExport import export_hands_to_csv
 
 N_RECENT_HANDS = 10
 
@@ -97,35 +98,14 @@ def main_loop(hand_cache):
         print()
         print(f'r - {len(result_hands)} analysable')
 
-    export_term = re.match(r'e\s+\$?([\d.]+)', search_term)
+    export_term = re.match(r'e(\s*\$?([\d.]*))', search_term)
     if export_term:
         if len(hands) == 0:
             print('No hands to analyse')
         else:
             export_path = Path(Path(DOWNLOADS_DIR), Path('hands_bankroll.csv'))
-            with open(export_path, 'w') as export:
-                export.write('hand_id,hand_no,date_utc,big_blind,win_loss_pre_rake_fees,win_loss_post_rake_fees,win_post_rake_fees,loss,rake_paid,jackpot_fees,bankroll\n')
-                bankroll = float(export_term.group(1))
-                # Assume sorted hands
-                for i, hand in enumerate(hands):
-                    win_loss = hand['players']['Hero']['win_loss_post_rake_fees']
-                    rake = hand['rake'] if win_loss > 0 else 0
-                    fees = hand['jackpot_fees'] if win_loss > 0 else 0
-                    bankroll = bankroll + win_loss
-                    export.write(','.join([
-                        hand['id'],
-                        str(i + 1),
-                        str(hand['date']),
-                        str(hand['big_blind']),
-                        str(win_loss + rake + fees),
-                        str(win_loss),
-                        str(hand['players']['Hero']['win_post_rake_fees']),
-                        str(hand['players']['Hero']['loss']),
-                        str(rake),
-                        str(fees),
-                        str(bankroll)
-                    ]))
-                    export.write('\n')
+            initial_bankroll = float(export_term.group(2) or 0)
+            export_hands_to_csv(export_path, hands, initial_bankroll)
 
             print(f'Data exported to {export_path}')
 
@@ -151,7 +131,7 @@ def reformat_search_term(search_term):
 
     if search_term.startswith('c '):
         return search_term
-    if search_term.startswith('e '):
+    if search_term == 'e' or search_term.startswith('e '):
         return search_term
 
     raise InvalidSearchException(f'Unknown command `{search_term}`')
