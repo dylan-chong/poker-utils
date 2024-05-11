@@ -92,7 +92,6 @@ def calculate_preflop_actions_for_chart(hand):
     if last_raise_action_i is None:
         raise NonAnalyzableHandException("We don't have charts for the player limping")
 
-    raises = [action for action in actions if action['action'] == 'raises']
     final_raise_calls = [ action for action in actions[last_raise_action_i + 1:] if action['action'] == 'calls']
 
     if len(final_raise_calls) == 0:
@@ -100,7 +99,7 @@ def calculate_preflop_actions_for_chart(hand):
     if len(final_raise_calls) > 1:
         raise NonAnalyzableHandException("Solvers will not support multiway pots")
 
-    return { 'raises': raises, 'call': final_raise_calls[0] }
+    return { 'call': final_raise_calls[0] }
 
 def validate_hero_played_preflop(hand):
     actions = hand['preflop']['actions']

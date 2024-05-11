@@ -185,6 +185,7 @@ def parse_bets_and_new_stacks(hand, street_actions, previous_player_stacks, prev
 
     return {
         'actions': street_actions,
+        'raises': [action for action in street_actions if action['action'] == 'raises'],
         'bets': bets_by_player,
         'new_stacks': calculate_player_stacks(previous_player_stacks, [bets_by_player]),
         'new_pot': pot_diff + previous_pot

@@ -30,12 +30,20 @@ def hand_to_tuples(hand, hand_i, bankroll):
 
     preflop_raises = hand.get('preflop', {}).get('raises', [])
 
+    hero_did_vpip_preflop = any(
+        action['player_id'] == 'Hero'
+        and action['action'] not in ['folds', 'checks']
+        for action in hand.get('preflop', {}).get('actions', [])
+    )
+
     flop_actions = hand.get('flop', {}).get('actions', [])
     hero_is_postflop = any(
         action.get('player_id') == 'Hero'
         and action.get('action') != 'shows'
         for action in flop_actions
     )
+
+    flop_player_ids = { action['player_id'] for action in flop_actions }
 
     oop = hand.get('oop', { 'action': None, 'player_id': None })
     ip = hand.get('ip', { 'action': None, 'player_id': None })
@@ -60,4 +68,8 @@ def hand_to_tuples(hand, hand_i, bankroll):
         ('hero_is_postflop',         str(hero_is_postflop)),
         ('preflop_n_bet',            str(len(preflop_raises) + 1)),
         ('preflop_is_raiser',        str(is_raiser)),
+        ('postflop_is_oop_heads_up', str(oop['player_id'] == 'Hero')),
+        ('postflop_is_ip_heads_up',  str(ip['player_id'] == 'Hero')),
+        ('postflop_n_way',           str(len(flop_player_ids))),
+        ('hero_did_vpip',            str(hero_did_vpip_preflop)), # TODO handle vpip postflop if BB check preflop
     ]

@@ -21,7 +21,7 @@ from GGPokerHandHistoryParser.GGPokerCraftFileHelpers import load_all_hands
 from GGPokerHandHistoryParser.PrintHelpers import print_main_loop_instructions, print_main_loop_instructions, print_hand_error, print_hand, print_hand_short, print_call_and_raise_range, format_result_count
 from GGPokerHandHistoryParser.Utils import InvalidSearchException, DOWNLOADS_DIR
 from GGPokerHandHistoryParser.History import save_to_history_file, last_search_term, print_history
-from GGPokerHandHistoryParser.CsvExport import export_hands_to_csv
+from GGPokerHandHistoryParser.CsvExportHelpers import export_hands_to_csv
 
 N_RECENT_HANDS = 10
 
