@@ -3,7 +3,7 @@ from pathlib import Path
 from GGPokerHandHistoryParser.Utils import DOWNLOADS_DIR
 from GGPokerHandHistoryParser.PrintHelpers import format_result_count
 
-LOG_FILE_PATH = Path(DOWNLOADS_DIR, Path('GG'), Path('history.txt'))
+LOG_FILE_PATH = Path(Path.home(), Path('.GGPokerHandHistoryParser.history.txt'))
 
 def last_search_term():
     lines = read_history(1)

@@ -33,7 +33,7 @@ def hand_to_tuples(hand, hand_i, bankroll):
     flop_actions = hand.get('flop', {}).get('actions', [])
     hero_is_postflop = any(
         action.get('player_id') == 'Hero'
-        and action.get('action') is not 'shows'
+        and action.get('action') != 'shows'
         for action in flop_actions
     )
 
@@ -58,6 +58,6 @@ def hand_to_tuples(hand, hand_i, bankroll):
         ('jackpot_fees',             str(fees)),
         ('relative_bankroll',        str(bankroll)),
         ('hero_is_postflop',         str(hero_is_postflop)),
-        ('preflop_n_bet',            str(len(preflop_raises))),
+        ('preflop_n_bet',            str(len(preflop_raises) + 1)),
         ('preflop_is_raiser',        str(is_raiser)),
     ]
