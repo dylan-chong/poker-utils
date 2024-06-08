@@ -1,4 +1,5 @@
 from GGPokerHandHistoryParser.Utils import POSTFLOP_SEAT_ORDER
+from GGPokerHandHistoryParser.PrintHelpers import format_cards
 
 def export_hands_to_csv(filename, hands):
     bankroll = 0.0
@@ -52,6 +53,8 @@ def hand_to_tuples(hand, hand_i, bankroll):
         or (ip['action'] == 'raise' and ip['player_id'] == 'Hero')
     )
 
+    hole_cards = format_cards(hand['players']['Hero']['hole_cards'], with_border=False).split(' ')
+
     return [
         ('hand_id',                  hand['id']),
         ('hand_no',                  str(hand_i + 1)),
@@ -72,4 +75,7 @@ def hand_to_tuples(hand, hand_i, bankroll):
         ('postflop_is_ip_heads_up',  str(ip['player_id'] == 'Hero')),
         ('postflop_n_way',           str(len(flop_player_ids))),
         ('hero_did_vpip',            str(hero_did_vpip_preflop)), # TODO handle vpip postflop if BB check preflop
+        ('win_loss_bb',              str(win_loss / hand['big_blind'])),
+        ('hole_card_1',              str(hole_cards[0])),
+        ('hole_card_2',              str(hole_cards[1])),
     ]
